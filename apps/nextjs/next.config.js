@@ -16,6 +16,24 @@ const config = {
     "@acme/validators",
   ],
 
+  /** Configure external image domains */
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "example.com",
+      },
+      {
+        protocol: "https",
+        hostname: "images.openfoodfacts.org",
+      },
+      {
+        protocol: "https",
+        hostname: "static.openfoodfacts.org",
+      },
+    ],
+  },
+
   /** We already do linting and typechecking as separate tasks in CI */
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },

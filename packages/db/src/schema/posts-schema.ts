@@ -1,9 +1,10 @@
 import { sql } from "drizzle-orm";
-import { pgTable } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const Post = pgTable("post", (t) => ({
+import { appSchema } from "./base";
+
+export const Post = appSchema.table("post", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   title: t.varchar({ length: 256 }).notNull(),
   content: t.text().notNull(),
@@ -22,4 +23,4 @@ export const CreatePostSchema = createInsertSchema(Post, {
   updatedAt: true,
 });
 
-export * from "./auth-schema";
+export const SelectPostSchema = createSelectSchema(Post);
