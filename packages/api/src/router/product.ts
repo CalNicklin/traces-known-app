@@ -2,8 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod/v4";
 
 import type { SearchResultProduct } from "@acme/db/schema";
-import { desc, eq, ilike, or } from "@acme/db";
-import { CreateProductSchema, Product } from "@acme/db/schema";
+import { CreateProductSchema, desc, eq, ilike, or, Product } from "@acme/db";
 
 import { protectedProcedure, publicProcedure } from "../trpc";
 
