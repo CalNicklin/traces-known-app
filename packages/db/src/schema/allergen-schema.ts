@@ -2,7 +2,9 @@ import { relations } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
+import { user } from "./auth-schema";
 import { appSchema } from "./base";
+import { Product } from "./product-schema";
 
 export const Allergen = appSchema.table("allergen", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -12,20 +14,26 @@ export const Allergen = appSchema.table("allergen", (t) => ({
 
 export const ProductAllergen = appSchema.table("product_allergen", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
-  productId: t.uuid().notNull(),
+  productId: t
+    .uuid()
+    .notNull()
+    .references(() => Product.id, { onDelete: "cascade" }),
   allergenId: t
     .uuid()
     .notNull()
-    .references(() => Allergen.id),
+    .references(() => Allergen.id, { onDelete: "cascade" }),
 }));
 
 export const UserAllergen = appSchema.table("user_allergen", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
-  userId: t.varchar({ length: 255 }).notNull(),
+  userId: t
+    .varchar({ length: 255 })
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
   allergenId: t
     .uuid()
     .notNull()
-    .references(() => Allergen.id),
+    .references(() => Allergen.id, { onDelete: "cascade" }),
 }));
 
 // Relations

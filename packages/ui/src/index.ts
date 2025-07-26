@@ -4,6 +4,7 @@ import { twMerge } from "tailwind-merge";
 const cn = (...inputs: Parameters<typeof cx>) => twMerge(cx(inputs));
 
 export { cn };
+export { Avatar, AvatarFallback, AvatarImage } from "./avatar";
 export { Badge } from "./badge";
 export { Button } from "./button";
 export {

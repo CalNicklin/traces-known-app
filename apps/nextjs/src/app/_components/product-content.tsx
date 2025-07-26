@@ -4,7 +4,15 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@acme/ui";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@acme/ui";
 
 import { useTRPC } from "~/trpc/react";
 
@@ -17,6 +25,10 @@ export function ProductContent({ id }: ProductContentProps) {
 
   const { data: product } = useSuspenseQuery(
     trpc.product.byId.queryOptions({ id }),
+  );
+
+  const { data: reports } = useSuspenseQuery(
+    trpc.report.byProductId.queryOptions({ productId: id }),
   );
 
   if (!product) {
@@ -103,13 +115,71 @@ export function ProductContent({ id }: ProductContentProps) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Community Reports</CardTitle>
+              <CardTitle>Community Reports ({reports.length})</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
-                🚧 Community reporting feature coming soon. Check back later to
-                see allergy reports for this product.
-              </p>
+              {reports.length > 0 ? (
+                <div className="space-y-4">
+                  {reports.map((report) => (
+                    <div
+                      key={report.id}
+                      className="flex items-start gap-3 rounded-lg border p-3"
+                    >
+                      <div className="flex-shrink-0">
+                        {report.allergenIds && report.allergenIds.length > 0 ? (
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-red-600">
+                            ⚠️
+                          </div>
+                        ) : (
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-600">
+                            ✓
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage
+                                src={report.user.image ?? undefined}
+                                alt={report.user.name}
+                              />
+                              <AvatarFallback className="text-xs">
+                                {report.user.name.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm font-medium">
+                              {report.user.name}
+                            </span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(report.reportDate).toLocaleDateString()}
+                          </span>
+                        </div>
+
+                        {report.comment && (
+                          <p className="text-sm text-muted-foreground">
+                            {report.comment}
+                          </p>
+                        )}
+
+                        {report.allergenIds &&
+                          report.allergenIds.length > 0 && (
+                            <p className="text-xs text-red-600">
+                              ⚠️ Reported allergen reaction
+                            </p>
+                          )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No community reports yet. Be the first to share your
+                  experience with this product.
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>

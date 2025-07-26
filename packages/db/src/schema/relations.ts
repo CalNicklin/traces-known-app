@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 
 import { Allergen, ProductAllergen } from "./allergen-schema";
+import { user } from "./auth-schema";
 import { Product } from "./product-schema";
 import { Report, ReportAllergen } from "./report-schema";
 
@@ -28,6 +29,10 @@ export const ReportProductRelations = relations(Report, ({ one }) => ({
   product: one(Product, {
     fields: [Report.productId],
     references: [Product.id],
+  }),
+  user: one(user, {
+    fields: [Report.userId],
+    references: [user.id],
   }),
 }));
 
