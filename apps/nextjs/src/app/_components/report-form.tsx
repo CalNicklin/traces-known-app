@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -31,6 +31,8 @@ const ReportFormSchema = z.object({
   productId: z.string().uuid("Please select a valid product"),
   allergenIds: z.array(z.string().uuid()).optional(),
   comment: z.string().optional(),
+  severity: z.enum(["LOW", "MODERATE", "HIGH"]),
+  symptoms: z.array(z.string()).max(10),
 });
 
 type ReportFormData = z.infer<typeof ReportFormSchema>;
@@ -42,7 +44,26 @@ interface ProductSearchResult {
   barcode?: string | null;
 }
 
-export function ReportForm() {
+const SYMPTOM_OPTIONS = [
+  "Hives / Rash",
+  "Itching",
+  "Digestive Issues",
+  "Breathing Difficulty",
+  "Swelling",
+  "Anaphylaxis",
+];
+
+const SEVERITY_OPTIONS = [
+  { value: "LOW", label: "Mild" },
+  { value: "MODERATE", label: "Moderate" },
+  { value: "HIGH", label: "Severe" },
+] as const;
+
+interface ReportFormProps {
+  preselectedProduct?: ProductSearchResult | null;
+}
+
+export function ReportForm({ preselectedProduct = null }: ReportFormProps) {
   const trpc = useTRPC();
 
   const [productSearch, setProductSearch] = useState("");
@@ -75,6 +96,8 @@ export function ReportForm() {
       productId: "",
       allergenIds: [],
       comment: "",
+      severity: "LOW",
+      symptoms: [],
     },
   });
 
@@ -133,19 +156,27 @@ export function ReportForm() {
 
   const handleProductSelect = (product: ProductSearchResult) => {
     setSelectedProduct(product);
-    setProductSearch(
-      `${product.name} ${product.brand ? `- ${product.brand}` : ""}`,
-    );
+    const label = `${product.name}${product.brand ? ` - ${product.brand}` : ""}`;
+    setProductSearch(label);
     form.setValue("productId", product.id);
-    form.setValue("productSearch", productSearch);
+    form.setValue("productSearch", label);
     setShowProductResults(false);
   };
+
+  useEffect(() => {
+    if (preselectedProduct) {
+      handleProductSelect(preselectedProduct);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preselectedProduct?.id]);
 
   const onSubmit = (data: ReportFormData) => {
     createReport.mutate({
       productId: data.productId,
       allergenIds: data.allergenIds,
       comment: data.comment,
+       severity: data.severity,
+       symptoms: data.symptoms,
     });
   };
 
@@ -290,6 +321,84 @@ export function ReportForm() {
                               className="rounded border-gray-300"
                             />
                             <span className="text-sm">{allergen.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Severity */}
+              <FormField
+                control={form.control}
+                name="severity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Reaction Severity</FormLabel>
+                    <FormDescription>
+                      Choose the best description of your reaction
+                    </FormDescription>
+                    <FormControl>
+                      <div className="grid grid-cols-3 gap-2">
+                        {SEVERITY_OPTIONS.map((option) => (
+                          <Button
+                            key={option.value}
+                            type="button"
+                            variant={
+                              field.value === option.value
+                                ? "primary"
+                                : "outline"
+                            }
+                            className="w-full"
+                            onClick={() => field.onChange(option.value)}
+                          >
+                            {option.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Symptoms */}
+              <FormField
+                control={form.control}
+                name="symptoms"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Symptoms Experienced</FormLabel>
+                    <FormDescription>
+                      Select all symptoms that applied to this reaction
+                    </FormDescription>
+                    <FormControl>
+                      <div className="grid grid-cols-2 gap-2">
+                        {SYMPTOM_OPTIONS.map((symptom) => (
+                          <label
+                            key={symptom}
+                            className="flex cursor-pointer items-center space-x-2 rounded-md border p-2 text-sm hover:bg-muted"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={field.value?.includes(symptom) ?? false}
+                              onChange={(e) => {
+                                const current = field.value ?? [];
+                                if (e.target.checked) {
+                                  field.onChange([...current, symptom]);
+                                } else {
+                                  field.onChange(
+                                    current.filter(
+                                      (value) => value !== symptom,
+                                    ),
+                                  );
+                                }
+                              }}
+                              className="rounded border-gray-300"
+                            />
+                            <span>{symptom}</span>
                           </label>
                         ))}
                       </div>

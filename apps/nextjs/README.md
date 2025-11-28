@@ -1,28 +1,61 @@
-# Create T3 App
+# Traces Known – Web App
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+The Next.js app is the primary interface for Traces Known – a community-driven database of allergy experiences. Users can authenticate with Better Auth, search products, submit reaction reports, configure their allergens, and (soon) interact with an AI agent that assembles screens on demand.
 
-## What's next? How do I make an app with this?
+## Stack
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+- [Next.js 15](https://nextjs.org/) with the App Router & React Server Components
+- [tRPC v11](https://trpc.io/) for end-to-end typesafe APIs
+- [Drizzle ORM](https://orm.drizzle.team/) talking to Vercel Postgres
+- [Better Auth](https://www.better-auth.com/) for authentication (expo-compatible)
+- [shadcn/ui](https://ui.shadcn.com/) design system packaged inside `@acme/ui`
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+## Environment variables
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+Copy the example file and fill in the values before running anything locally:
 
-## Learn More
+```bash
+cp ../../.env.example ../../.env
+```
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+Mandatory values:
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+| Variable         | Description                                               |
+| ---------------- | --------------------------------------------------------- |
+| `POSTGRES_URL`   | Connection string for Drizzle + Vercel Postgres (pooled). |
+| `AUTH_SECRET`    | Better Auth secret (generate something long & random).    |
+| `OPENAI_API_KEY` | Used for AI-generated risk summaries + the agent router.  |
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+Optional values:
 
-## How do I deploy this?
+| Variable                                  | Description                                         |
+| ----------------------------------------- | --------------------------------------------------- |
+| `AUTH_DISCORD_ID` / `AUTH_DISCORD_SECRET` | Enable Discord OAuth in Better Auth.                |
+| `OPENAI_MODEL`                            | Override the default OpenAI model (`gpt-4.1-mini`). |
+| `VERCEL_PROJECT_PRODUCTION_URL`           | Needed when deriving the public base URL on Vercel. |
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+## Development
+
+```bash
+# install dependencies for the whole monorepo
+pnpm install
+
+# run database migrations before booting the app
+pnpm db:push
+
+# launch Next.js with Turbopack
+pnpm dev --filter @acme/nextjs...
+```
+
+The agent experience and the Expo client both call into the Next.js API (`/api/trpc`, `/api/agent`). Always keep this app running when working on other surfaces.
+
+## Deployment
+
+Deploy `apps/nextjs` to Vercel (project root: `apps/nextjs`). Required env values:
+
+- `POSTGRES_URL`
+- `AUTH_SECRET`
+- `OPENAI_API_KEY`
+- any OAuth provider secrets you configured locally
+
+Run `pnpm db:push` (or the Drizzle migrations) against your production DB, then trigger a Vercel build. Expo apps and all client surfaces should talk to the same deployed backend URL.

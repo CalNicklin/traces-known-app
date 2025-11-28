@@ -23,17 +23,19 @@ interface ProductContentProps {
 export function ProductContent({ id }: ProductContentProps) {
   const trpc = useTRPC();
 
-  const { data: product } = useSuspenseQuery(
-    trpc.product.byId.queryOptions({ id }),
+  const { data: detail } = useSuspenseQuery(
+    trpc.product.detail.queryOptions({ id }),
   );
 
   const { data: reports } = useSuspenseQuery(
     trpc.report.byProductId.queryOptions({ productId: id }),
   );
 
-  if (!product) {
+  if (!detail) {
     notFound();
   }
+
+  const { product, stats } = detail;
 
   return (
     <div className="space-y-6">
@@ -65,6 +67,78 @@ export function ProductContent({ id }: ProductContentProps) {
         </Card>
 
         <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>At a glance</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Total reports
+                  </p>
+                  <p className="text-2xl font-semibold">
+                    {stats.totalReports}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Last reported
+                  </p>
+                  <p className="text-lg font-medium">
+                    {stats.lastReportedAt
+                      ? new Date(stats.lastReportedAt).toLocaleDateString()
+                      : "Never"}
+                  </p>
+                </div>
+                {Object.entries(stats.severityBreakdown).map(
+                  ([severity, count]) => (
+                    <div key={severity}>
+                      <p className="text-sm text-muted-foreground">
+                        {severity} reactions
+                      </p>
+                      <p className="text-lg font-medium">{count}</p>
+                    </div>
+                  ),
+                )}
+              </CardContent>
+            </Card>
+
+            {product.aiSummary && (
+              <Card className="border-primary/20 bg-primary/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    AI Risk Summary
+                    <span className="text-sm font-medium">
+                      Level: {product.aiSummary.riskLevel}
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                  <p>{product.aiSummary.summary}</p>
+                  {product.aiSummary.highlights.length > 0 && (
+                    <div>
+                      <p className="font-semibold">Highlights</p>
+                      <ul className="mt-1 list-disc space-y-1 pl-5 text-muted-foreground">
+                        {product.aiSummary.highlights.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {product.aiSummary.recommendations.length > 0 && (
+                    <div>
+                      <p className="font-semibold">Recommendations</p>
+                      <ul className="mt-1 list-disc space-y-1 pl-5 text-muted-foreground">
+                        {product.aiSummary.recommendations.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
           <Card>
             <CardHeader>
               <CardTitle>Product Information</CardTitle>

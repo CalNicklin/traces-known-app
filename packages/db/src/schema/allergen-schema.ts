@@ -60,3 +60,17 @@ export const CreateAllergenSchema = createInsertSchema(Allergen, {
 export const SelectAllergenSchema = createSelectSchema(Allergen);
 export const SelectProductAllergenSchema = createSelectSchema(ProductAllergen);
 export const SelectUserAllergenSchema = createSelectSchema(UserAllergen);
+
+export const CreateProductAllergenSchema = createInsertSchema(ProductAllergen, {
+  productId: z.string().uuid(),
+  allergenId: z.string().uuid(),
+}).omit({
+  id: true,
+});
+
+export const CreateUserAllergenSchema = createInsertSchema(UserAllergen, {
+  userId: z.string().min(1),
+  allergenId: z.string().uuid(),
+}).omit({
+  id: true,
+});

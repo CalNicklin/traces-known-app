@@ -39,6 +39,21 @@ async function seed() {
           ingredients: ["Milk", "Vitamin D3"],
           imageUrl: "https://example.com/milk.jpg",
           brand: "Dairy Farm",
+          aiSummary: {
+            riskLevel: "HIGH",
+            summary:
+              "Multiple community members with dairy allergies reported immediate reactions ranging from hives to digestive discomfort.",
+            highlights: [
+              "Fresh dairy product with no dedicated allergen controls",
+              "Two severe reactions reported in the last week",
+            ],
+            recommendations: [
+              "Avoid unless you are fully tolerant to dairy proteins",
+              "Carry rescue medication if you must handle it",
+            ],
+            sampleSize: 4,
+          },
+          aiSummaryUpdatedAt: new Date(),
         },
         {
           name: "Peanut Butter",
@@ -81,6 +96,21 @@ async function seed() {
           ingredients: ["Rice", "Salt", "Sesame oil"],
           imageUrl: "https://example.com/rice-crackers.jpg",
           brand: "Healthy Snacks",
+          aiSummary: {
+            riskLevel: "LOW",
+            summary:
+              "No adverse reactions reported. Light snack typically safe for common top-9 allergens.",
+            highlights: [
+              "Manufactured on dedicated gluten-free line",
+              "Sesame presence noted but no reactions yet",
+            ],
+            recommendations: [
+              "Confirm sesame tolerance before consuming",
+              "Great option for mixed-allergy households",
+            ],
+            sampleSize: 3,
+          },
+          aiSummaryUpdatedAt: new Date(),
         },
         {
           name: "Salmon Fillet",

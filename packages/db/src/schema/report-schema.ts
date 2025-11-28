@@ -21,6 +21,11 @@ export const Report = appSchema.table("report", (t) => ({
   comment: t.text(),
   reportDate: t.timestamp().defaultNow().notNull(),
   createdAt: t.timestamp().defaultNow().notNull(),
+  severity: t
+    .varchar({ length: 32 })
+    .notNull()
+    .default("UNKNOWN"),
+  symptoms: t.text().array(),
 }));
 
 export const ReportAllergen = appSchema.table("report_allergen", (t) => ({
@@ -55,11 +60,17 @@ export const ReportAllergenRelations = relations(ReportAllergen, ({ one }) => ({
   }),
 }));
 
+export const ReportSeveritySchema = z.enum(["LOW", "MODERATE", "HIGH", "UNKNOWN"]);
+
+export type ReportSeverity = z.infer<typeof ReportSeveritySchema>;
+
 // Schemas
 export const CreateReportSchema = createInsertSchema(Report, {
   productId: z.string().uuid(),
   allergenIds: z.array(z.string().uuid()).optional(),
   comment: z.string().optional(),
+  severity: ReportSeveritySchema.default("UNKNOWN"),
+  symptoms: z.array(z.string()).max(10).optional(),
 }).omit({
   id: true,
   userId: true,

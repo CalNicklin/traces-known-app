@@ -1,170 +1,116 @@
-import React, { useState } from "react";
-import { Button, Pressable, Text, TextInput, View } from "react-native";
+import React from "react";
+import {
+  Pressable,
+  Text,
+  View,
+  FlatList,
+  RefreshControl,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link, Stack } from "expo-router";
-import { LegendList } from "@legendapp/list";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
-import type { RouterOutputs } from "~/utils/api";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 
-function PostCard(props: {
-  post: RouterOutputs["post"]["all"][number];
-  onDelete: () => void;
-}) {
-  return (
-    <View className="flex flex-row rounded-lg bg-muted p-4">
-      <View className="flex-grow">
-        <Link
-          asChild
-          href={{
-            pathname: "/post/[id]",
-            params: { id: props.post.id },
-          }}
-        >
-          <Pressable className="">
-            <Text className="text-xl font-semibold text-primary">
-              {props.post.title}
-            </Text>
-            <Text className="mt-2 text-foreground">{props.post.content}</Text>
-          </Pressable>
-        </Link>
-      </View>
-      <Pressable onPress={props.onDelete}>
-        <Text className="font-bold uppercase text-primary">Delete</Text>
-      </Pressable>
-    </View>
-  );
-}
-
-function CreatePost() {
-  const queryClient = useQueryClient();
-
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-
-  const { mutate, error } = useMutation(
-    trpc.post.create.mutationOptions({
-      async onSuccess() {
-        setTitle("");
-        setContent("");
-        await queryClient.invalidateQueries(trpc.post.all.queryFilter());
-      },
-    }),
-  );
-
-  return (
-    <View className="mt-4 flex gap-2">
-      <TextInput
-        className="items-center rounded-md border border-input bg-background px-3 text-lg leading-[1.25] text-foreground"
-        value={title}
-        onChangeText={setTitle}
-        placeholder="Title"
-      />
-      {error?.data?.zodError?.fieldErrors.title && (
-        <Text className="mb-2 text-destructive">
-          {error.data.zodError.fieldErrors.title}
-        </Text>
-      )}
-      <TextInput
-        className="items-center rounded-md border border-input bg-background px-3 text-lg leading-[1.25] text-foreground"
-        value={content}
-        onChangeText={setContent}
-        placeholder="Content"
-      />
-      {error?.data?.zodError?.fieldErrors.content && (
-        <Text className="mb-2 text-destructive">
-          {error.data.zodError.fieldErrors.content}
-        </Text>
-      )}
-      <Pressable
-        className="flex items-center rounded bg-primary p-2"
-        onPress={() => {
-          mutate({
-            title,
-            content,
-          });
-        }}
-      >
-        <Text className="text-foreground">Create</Text>
-      </Pressable>
-      {error?.data?.code === "UNAUTHORIZED" && (
-        <Text className="mt-2 text-destructive">
-          You need to be logged in to create a post
-        </Text>
-      )}
-    </View>
-  );
-}
-
-function MobileAuth() {
-  const { data: session } = authClient.useSession();
-
-  return (
-    <>
-      <Text className="pb-2 text-center text-xl font-semibold text-zinc-900">
-        {session?.user.name ? `Hello, ${session.user.name}` : "Not logged in"}
-      </Text>
-      <Button
-        onPress={() =>
-          session
-            ? authClient.signOut()
-            : authClient.signIn.social({
-                provider: "discord",
-                callbackURL: "/",
-              })
-        }
-        title={session ? "Sign Out" : "Sign In With Discord"}
-        color={"#5B65E9"}
-      />
-    </>
-  );
-}
-
 export default function Index() {
-  const queryClient = useQueryClient();
-
-  const postQuery = useQuery(trpc.post.all.queryOptions());
-
-  const deletePostMutation = useMutation(
-    trpc.post.delete.mutationOptions({
-      onSettled: () =>
-        queryClient.invalidateQueries(trpc.post.all.queryFilter()),
-    }),
+  const { data: session } = authClient.useSession();
+  const { data: reports, refetch, isFetching } = useQuery(
+    trpc.report.latest.queryOptions({ limit: 5 }),
   );
 
   return (
     <SafeAreaView className="bg-background">
-      {/* Changes page title visible on the header */}
-      <Stack.Screen options={{ title: "Home Page" }} />
-      <View className="h-full w-full bg-background p-4">
-        <Text className="pb-2 text-center text-5xl font-bold text-foreground">
-          Create <Text className="text-primary">T3</Text> Turbo
-        </Text>
-
-        <MobileAuth />
-
-        <View className="py-2">
-          <Text className="font-semibold italic text-primary">
-            Press on a post
+      <Stack.Screen options={{ title: "Traces Known" }} />
+      <View className="h-full w-full gap-6 bg-background p-4">
+        <View className="space-y-2">
+          <Text className="text-sm uppercase text-muted-foreground">
+            Allergy agent
+          </Text>
+          <Text className="text-4xl font-bold text-foreground">
+            Hey {session?.user.name ?? "friend"} 👋
+          </Text>
+          <Text className="text-sm text-muted-foreground">
+            Search products, log your reactions, and review the community feed.
           </Text>
         </View>
 
-        <LegendList
-          data={postQuery.data ?? []}
-          estimatedItemSize={20}
-          keyExtractor={(item) => item.id}
-          ItemSeparatorComponent={() => <View className="h-2" />}
-          renderItem={(p) => (
-            <PostCard
-              post={p.item}
-              onDelete={() => deletePostMutation.mutate(p.item.id)}
-            />
-          )}
-        />
+        <View className="flex-row gap-3">
+          <Link href="/lookup" asChild>
+            <Pressable className="flex-1 rounded-2xl bg-primary p-4">
+              <Text className="text-sm font-medium uppercase text-white/80">
+                Lookup
+              </Text>
+              <Text className="text-xl font-semibold text-white">
+                Is this safe?
+              </Text>
+            </Pressable>
+          </Link>
 
-        <CreatePost />
+          <Link href="/report" asChild>
+            <Pressable className="flex-1 rounded-2xl bg-destructive p-4">
+              <Text className="text-sm font-medium uppercase text-white/80">
+                Report
+              </Text>
+              <Text className="text-xl font-semibold text-white">
+                Log reaction
+              </Text>
+            </Pressable>
+          </Link>
+        </View>
+
+        <View className="flex-1">
+          <View className="mb-3 flex-row items-center justify-between">
+            <Text className="text-lg font-semibold text-foreground">
+              Recent alerts
+            </Text>
+            <Link href="/lookup" asChild>
+              <Pressable>
+                <Text className="text-sm font-medium text-primary">
+                  View all
+                </Text>
+              </Pressable>
+            </Link>
+          </View>
+
+          <FlatList
+            data={reports ?? []}
+            keyExtractor={(item) => item.id}
+            refreshControl={
+              <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+            }
+            ListEmptyComponent={
+              <View className="rounded-2xl border border-dashed border-muted p-4">
+                <Text className="text-sm text-muted-foreground">
+                  No reports yet. Log the first reaction from the Report tab.
+                </Text>
+              </View>
+            }
+            renderItem={({ item }) => (
+              <Link
+                href={{
+                  pathname: "/product/[id]",
+                  params: { id: item.productId },
+                }}
+                asChild
+              >
+                <Pressable className="mb-3 rounded-2xl border border-muted bg-card p-4">
+                  <Text className="text-base font-semibold text-foreground">
+                    {item.product?.name ?? "Unknown product"}
+                  </Text>
+                  <Text className="text-xs text-muted-foreground">
+                    Severity: {item.severity}
+                  </Text>
+                  {item.comment ? (
+                    <Text className="mt-2 text-sm text-muted-foreground">
+                      “{item.comment}”
+                    </Text>
+                  ) : null}
+                </Pressable>
+              </Link>
+            )}
+          />
+        </View>
       </View>
     </SafeAreaView>
   );

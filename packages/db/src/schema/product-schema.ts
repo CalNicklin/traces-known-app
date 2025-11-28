@@ -12,8 +12,20 @@ export const Product = appSchema.table("product", (t) => ({
   ingredients: t.text().array(),
   imageUrl: t.varchar({ length: 500 }),
   brand: t.varchar({ length: 255 }),
+  aiSummary: t.jsonb("ai_summary").$type<ProductAISummary>(),
+  aiSummaryUpdatedAt: t.timestamp("ai_summary_updated_at"),
   ...timestamps,
 }));
+
+export const ProductAISummarySchema = z.object({
+  riskLevel: z.enum(["LOW", "MEDIUM", "HIGH"]),
+  summary: z.string(),
+  highlights: z.array(z.string()).default([]),
+  recommendations: z.array(z.string()).default([]),
+  sampleSize: z.number().int().nonnegative().optional(),
+});
+
+export type ProductAISummary = z.infer<typeof ProductAISummarySchema>;
 
 // Schemas for database operations
 export const CreateProductSchema = createInsertSchema(Product, {
@@ -29,6 +41,8 @@ export const CreateProductSchema = createInsertSchema(Product, {
   createdAt: true,
   updatedAt: true,
   deletedAt: true,
+  aiSummary: true,
+  aiSummaryUpdatedAt: true,
 });
 
 export const SelectProductSchema = createSelectSchema(Product);

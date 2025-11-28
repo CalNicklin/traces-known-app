@@ -25,6 +25,12 @@ export async function Navigation() {
 
           <div className="hidden items-center space-x-4 md:flex">
             <Link
+              href="/"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Agent
+            </Link>
+            <Link
               href="/lookup"
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
