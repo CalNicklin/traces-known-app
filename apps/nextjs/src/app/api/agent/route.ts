@@ -12,7 +12,9 @@ import { ensureProductSummary } from "~/server/ai/risk-summary";
 import { getServerCaller } from "~/server/trpc-caller";
 
 export async function POST(request: Request) {
-  const json = await request.json().catch(() => null);
+  const json = (await request
+    .json()
+    .catch(() => null)) as unknown as AgentRequest;
   const parsed = AgentRequestSchema.safeParse(json);
 
   if (!parsed.success) {
@@ -54,7 +56,7 @@ export async function POST(request: Request) {
 async function runAgent(payload: AgentRequest, request: Request) {
   const caller = await getServerCaller(request.headers);
   const session = await caller.auth.getSession();
-  const userName = session?.user?.name ?? "friend";
+  const userName = session?.user.name ?? "friend";
 
   // Collect UI blocks from tool calls
   const uiBlocks: AgentBlock[] = [];
@@ -169,7 +171,7 @@ ${conversationHistory ? `Recent conversation:\n${conversationHistory}` : ""}`,
           "Get the current user's allergen preferences and sensitivities. Use when discussing their allergies or preferences.",
         inputSchema: z.object({}),
         execute: async () => {
-          if (!session?.user?.id) {
+          if (!session?.user.id) {
             return { error: "User not logged in", allergens: [] };
           }
 
@@ -199,7 +201,7 @@ ${conversationHistory ? `Recent conversation:\n${conversationHistory}` : ""}`,
             .nullable()
             .describe("Optional product ID to pre-fill the form"),
         }),
-        execute: async ({ productId }) => {
+        execute: ({ productId }) => {
           uiBlocks.push({
             id: crypto.randomUUID(),
             kind: "component",
@@ -219,7 +221,7 @@ ${conversationHistory ? `Recent conversation:\n${conversationHistory}` : ""}`,
             .enum(["latest", "mine"])
             .describe("'mine' for user's reports, 'latest' for all recent"),
         }),
-        execute: async ({ scope }) => {
+        execute: ({ scope }) => {
           uiBlocks.push({
             id: crypto.randomUUID(),
             kind: "component",
