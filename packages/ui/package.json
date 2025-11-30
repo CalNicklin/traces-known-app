@@ -5,11 +5,15 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./avatar": "./src/avatar.tsx",
+    "./badge": "./src/badge.tsx",
     "./button": "./src/button.tsx",
+    "./card": "./src/card.tsx",
     "./dropdown-menu": "./src/dropdown-menu.tsx",
     "./form": "./src/form.tsx",
     "./input": "./src/input.tsx",
     "./label": "./src/label.tsx",
+    "./skeleton": "./src/skeleton.tsx",
     "./theme": "./src/theme.tsx",
     "./toast": "./src/toast.tsx"
   },

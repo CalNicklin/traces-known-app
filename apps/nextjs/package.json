@@ -20,6 +20,7 @@
     "@acme/ui": "workspace:*",
     "@acme/validators": "workspace:*",
     "@ai-sdk/openai": "^2.0.74",
+    "@ai-sdk/rsc": "^1.0.105",
     "@heroicons/react": "^2.2.0",
     "@t3-oss/env-nextjs": "^0.13.6",
     "@tanstack/react-query": "catalog:",

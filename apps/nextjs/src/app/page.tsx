@@ -1,5 +1,6 @@
 import { getSession } from "~/auth/server";
-import { AgentShell } from "./_components/agent/agent-shell";
+import { GenerativeCanvas } from "./_components/generative-canvas";
+import { GenerativeAI } from "./_lib/generative-ai";
 import { AuthShowcase } from "./_components/auth-showcase";
 
 export default async function HomePage() {
@@ -26,20 +27,10 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="container py-8">
-      <div className="space-y-6">
-        <div>
-          <p className="text-sm text-muted-foreground">Agent surface</p>
-          <h1 className="text-3xl font-bold">
-            Welcome back, {session.user.name}!
-          </h1>
-          <p className="text-muted-foreground">
-            Tell the agent what you need and it will stitch the right tools
-            together.
-          </p>
-        </div>
-        <AgentShell userName={session.user.name ?? "friend"} />
-      </div>
-    </main>
+    <GenerativeAI>
+      <main className="px-4 py-10 lg:px-8">
+        <GenerativeCanvas userName={session.user.name ?? "friend"} />
+      </main>
+    </GenerativeAI>
   );
 }
