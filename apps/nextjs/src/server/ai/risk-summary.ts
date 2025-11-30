@@ -75,10 +75,15 @@ Be concise (2-3 sentences max for the summary) and avoid medical advice.`,
     prompt: JSON.stringify(payload),
   });
 
+  const normalized: ProductAISummary = {
+    ...parsed,
+    sampleSize: parsed.sampleSize ?? undefined,
+  };
+
   await caller.product.upsertSummary({
     productId,
-    summary: parsed,
+    summary: normalized,
   });
 
-  return parsed;
+  return normalized;
 }

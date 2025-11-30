@@ -1,231 +1,268 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useActions, useUIState } from "@ai-sdk/rsc";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Card, CardContent, CardHeader, CardTitle, cn } from "@acme/ui";
-import { Badge } from "@acme/ui/badge";
-import { Button } from "@acme/ui/button";
-import { Input } from "@acme/ui/input";
-import { ThemeToggle } from "@acme/ui/theme";
 import { toast } from "@acme/ui/toast";
 
-import type {
-  CanvasUIState,
-  GenerativeAIType,
-} from "../_lib/generative-ai-types";
-import { AgentQuickActions } from "./agent/agent-quick-actions";
+import type { AgentBlock } from "~/app/_lib/agent-schema";
+import type { SduiScreen, SduiSection } from "~/types/sdui";
+import { AgentResponseSchema } from "~/app/_lib/agent-schema";
+import { SduiRenderer } from "./sdui/sdui-renderer";
+
+// Runtime imports for schema builders (values, not types)
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { buildScreen, buildSection } = require("@acme/api/sdui-schema") as {
+  buildScreen: (input: unknown) => SduiScreen;
+  buildSection: (input: unknown) => SduiSection;
+};
+
+// =============================================================================
+// Props
+// =============================================================================
 
 interface GenerativeCanvasProps {
   readonly userName: string;
 }
 
+// =============================================================================
+// Component
+// =============================================================================
+
 export function GenerativeCanvas({ userName }: GenerativeCanvasProps) {
-  const [uiState, setUIState] = useUIState<GenerativeAIType>();
-  const actions = useActions<GenerativeAIType>();
+  const [screen, setScreen] = useState<SduiScreen | null>(null);
+  const [_blocks, setBlocks] = useState<AgentBlock[]>([]);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const viewportRef = useRef<HTMLDivElement>(null);
+  const [hasBootstrapped, setHasBootstrapped] = useState(false);
 
-  const workbenchModules = useMemo(
-    () => uiState.modules.filter((module) => module.slot === "workbench"),
-    [uiState.modules],
+  // ==========================================================================
+  // Bootstrap Screen
+  // ==========================================================================
+
+  const bootstrapScreen = useMemo<SduiScreen>(() => {
+    const firstName = userName.split(" ")[0] ?? "friend";
+
+    return buildScreen({
+      id: crypto.randomUUID(),
+      version: "2025-01",
+      title: "Immersive workspace",
+      description: "Agent-driven canvas for allergy-safe product discovery",
+      layout: "canvas",
+      layoutProps: {
+        tone: "neutral",
+        padding: "lg",
+        width: "wide",
+        fullscreen: true,
+        scrollable: true,
+        overlayPlacement: "bottom-center",
+        overlayWidth: "medium",
+        overlay: {
+          type: "chat-input",
+          placeholder: "Describe what should appear on the canvas…",
+          helperText: "Shift + Enter for a newline",
+          quickActions: [
+            {
+              id: "qa-default-search",
+              label: "Find safe snacks",
+              prompt: "Search for gluten-free snacks and show the top results.",
+            },
+            {
+              id: "qa-default-allergens",
+              label: "My allergens",
+              prompt: "Show my allergen preferences.",
+            },
+          ],
+        },
+      },
+      sections: [
+        buildSection({
+          id: crypto.randomUUID(),
+          tone: "default",
+          background: "surface",
+          padding: "lg",
+          gap: "md",
+          width: "default",
+          border: "soft",
+          header: {
+            kicker: "Immersive workspace",
+            title: `Hi ${firstName}, let's explore`,
+            description:
+              "Ask for product searches, allergen insights, or reports and I'll compose the layout for you.",
+            align: "start",
+          },
+          components: [
+            {
+              id: crypto.randomUUID(),
+              type: "text",
+              props: {
+                text: "Use the floating input to tell me what to pin on the canvas.",
+                tone: "muted",
+                size: "md",
+              },
+            },
+          ],
+        }),
+      ],
+      actions: [],
+      dataRequirements: [],
+    });
+  }, [userName]);
+
+  // ==========================================================================
+  // Send Prompt
+  // ==========================================================================
+
+  const sendPrompt = useCallback(
+    async (prompt: string) => {
+      const trimmed = prompt.trim();
+      if (!trimmed || isSending) {
+        return;
+      }
+
+      setIsSending(true);
+      setInput("");
+
+      // Build blocks synchronously to avoid React state closure issues
+      const userBlock: AgentBlock = {
+        id: crypto.randomUUID(),
+        kind: "text",
+        role: "user",
+        text: trimmed,
+      };
+
+      // Get current blocks and compute next state
+      let blocksToSend: AgentBlock[] = [];
+      setBlocks((prev) => {
+        blocksToSend = [...prev, userBlock].slice(-20);
+        return blocksToSend;
+      });
+
+      // Wait for state to settle (React 18 automatic batching)
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      try {
+        const response = await fetch("/api/agent", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            prompt: trimmed,
+            blocks: blocksToSend,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to reach agent endpoint");
+        }
+
+        const json: unknown = await response.json();
+        const parsed = AgentResponseSchema.parse(json);
+
+        setBlocks((prev) => [...prev, ...parsed.blocks].slice(-20));
+
+        if (parsed.view) {
+          setScreen(parsed.view);
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error(
+          "Unable to shape the canvas right now. Please try again shortly.",
+        );
+      } finally {
+        setIsSending(false);
+      }
+    },
+    [isSending],
   );
-  const sidebarModules = useMemo(
-    () => uiState.modules.filter((module) => module.slot === "sidebar"),
-    [uiState.modules],
-  );
+
+  // ==========================================================================
+  // Bootstrap on Mount
+  // ==========================================================================
 
   useEffect(() => {
-    viewportRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [uiState.messages]);
-
-  const sendPrompt = async (prompt: string) => {
-    const trimmed = prompt.trim();
-    if (!trimmed) {
+    if (hasBootstrapped) {
       return;
     }
-
-    setIsSending(true);
-    try {
-      const nextState = await actions.continueConversation({ prompt: trimmed });
-      setUIState(nextState);
-      setInput("");
-    } catch (error) {
-      console.error(error);
-      toast.error("Unable to reach the agent. Try again in a moment.");
-    } finally {
-      setIsSending(false);
-    }
-  };
-
-  const dismissModule = async (moduleId: string) => {
-    try {
-      const nextState = await actions.dismissModule({ moduleId });
-      setUIState(nextState);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to dismiss module.");
-    }
-  };
-
-  const handleQuickPrompt = (prompt: string) => {
-    setInput(prompt);
-    void sendPrompt(prompt);
-  };
-
-  return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-      <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-1">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">
-            Generative workspace
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Welcome back, {userName}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Tell the agent what to surface and it will materialize the right
-            panels—no navigation required.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-        </div>
-      </header>
-
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(320px,1fr)]">
-        <section className="flex flex-col gap-4">
-          <Card className="flex flex-col gap-4 p-6">
-            <div className="flex flex-col gap-3">
-              {uiState.messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={cn(
-                    "flex",
-                    message.role === "user" ? "justify-end" : "justify-start",
-                  )}
-                >
-                  {message.node}
-                </div>
-              ))}
-            </div>
-            <div ref={viewportRef} />
-          </Card>
-
-          <form
-            className="flex flex-col gap-3 rounded-3xl border bg-background p-4 shadow-sm lg:flex-row lg:items-center"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void sendPrompt(input);
-            }}
-          >
-            <Input
-              placeholder="Describe what you want to appear on the canvas…"
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              disabled={isSending}
-              className="flex-1 bg-transparent"
-            />
-            <Button type="submit" disabled={isSending}>
-              {isSending ? "Thinking…" : "Send"}
-            </Button>
-          </form>
-
-          <AgentQuickActions
-            disabled={isSending}
-            onPrompt={(prompt) => handleQuickPrompt(prompt)}
-          />
-
-          <ModuleSection
-            emptyLabel="Modules that need more room will appear here."
-            modules={workbenchModules}
-            onDismiss={dismissModule}
-          />
-        </section>
-
-        <aside className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Pinned surfaces</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ModuleSection
-                modules={sidebarModules}
-                onDismiss={dismissModule}
-                emptyLabel="Ask for recent reports, allergen preferences, or anything else to fill this column."
-                condensed
-              />
-            </CardContent>
-          </Card>
-        </aside>
-      </div>
-    </div>
-  );
-}
-
-interface ModuleSectionProps {
-  readonly modules: CanvasUIState["modules"];
-  readonly onDismiss: (moduleId: string) => void;
-  readonly emptyLabel: string;
-  readonly condensed?: boolean;
-}
-
-function ModuleSection({
-  modules,
-  onDismiss,
-  emptyLabel,
-  condensed = false,
-}: ModuleSectionProps) {
-  if (modules.length === 0) {
-    return (
-      <div className="rounded-2xl border border-dashed p-6 text-sm text-muted-foreground">
-        {emptyLabel}
-      </div>
+    setHasBootstrapped(true);
+    void sendPrompt(
+      "Introduce yourself and compose a helpful workspace for allergy-safe product discovery.",
     );
-  }
+  }, [hasBootstrapped, sendPrompt]);
 
-  return (
-    <div className="flex flex-col gap-4">
-      {modules.map((module) => (
-        <ModuleCard
-          key={module.id}
-          module={module}
-          onDismiss={() => onDismiss(module.id)}
-          condensed={condensed}
-        />
-      ))}
-    </div>
+  // ==========================================================================
+  // Section Update Handler
+  // ==========================================================================
+
+  const handleSectionUpdate = useCallback(
+    (sectionId: string, updatedSection: SduiSection) => {
+      setScreen((prev) => {
+        if (!prev) {
+          return prev;
+        }
+        return {
+          ...prev,
+          sections: prev.sections.map((section) =>
+            section.id === sectionId ? updatedSection : section,
+          ),
+        };
+      });
+    },
+    [],
   );
-}
 
-interface ModuleCardProps {
-  readonly module: CanvasUIState["modules"][number];
-  readonly onDismiss: () => void;
-  readonly condensed: boolean;
-}
+  // ==========================================================================
+  // Action Handler
+  // ==========================================================================
 
-function ModuleCard({ module, onDismiss, condensed }: ModuleCardProps) {
+  const handleActionInvoke = useCallback(
+    async (actionId: string, elementId: string) => {
+      try {
+        const response = await fetch("/api/sdui/action", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            actionId,
+            elementId,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Action failed: ${response.statusText}`);
+        }
+
+        const payload = (await response.json()) as {
+          readonly section?: SduiSection;
+        };
+
+        if (payload.section) {
+          handleSectionUpdate(elementId, payload.section);
+        }
+      } catch (error) {
+        console.error("Action error:", error);
+        throw error;
+      }
+    },
+    [handleSectionUpdate],
+  );
+
+  // ==========================================================================
+  // Render
+  // ==========================================================================
+
+  const activeScreen = screen ?? bootstrapScreen;
+
   return (
-    <div className="rounded-3xl border bg-card p-4 shadow-sm">
-      <div className="mb-3 flex items-center justify-between gap-4">
-        <div>
-          <p className="text-sm font-semibold">{module.title}</p>
-          <Badge variant="outline" className="mt-1 text-[10px] uppercase">
-            {module.component}
-          </Badge>
-        </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 rounded-full"
-          onClick={onDismiss}
-        >
-          ×
-        </Button>
-      </div>
-      <div className={condensed ? "text-sm" : "space-y-3"}>{module.node}</div>
-    </div>
+    <SduiRenderer
+      screen={activeScreen}
+      inputValue={input}
+      onInputChange={setInput}
+      onSendPrompt={sendPrompt}
+      isSending={isSending}
+      onActionInvoke={handleActionInvoke}
+      onActionError={(message) => toast.error(message)}
+    />
   );
 }

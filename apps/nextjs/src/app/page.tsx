@@ -1,7 +1,6 @@
 import { getSession } from "~/auth/server";
-import { GenerativeCanvas } from "./_components/generative-canvas";
-import { GenerativeAI } from "./_lib/generative-ai";
 import { AuthShowcase } from "./_components/auth-showcase";
+import { GenerativeCanvas } from "./_components/generative-canvas";
 
 export default async function HomePage() {
   const session = await getSession();
@@ -27,10 +26,8 @@ export default async function HomePage() {
   }
 
   return (
-    <GenerativeAI>
-      <main className="px-4 py-10 lg:px-8">
-        <GenerativeCanvas userName={session.user.name ?? "friend"} />
-      </main>
-    </GenerativeAI>
+    <main className="px-4 py-10 lg:px-8">
+      <GenerativeCanvas userName={session.user.name ?? "friend"} />
+    </main>
   );
 }

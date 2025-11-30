@@ -19,6 +19,7 @@ export const env = createEnv({
     POSTGRES_URL: z.string().url(),
     OPENAI_API_KEY: z.string().min(1),
     OPENAI_MODEL: z.string().default("gpt-4o-mini"),
+    MCP_PORT: z.string().default("3001"),
   },
 
   /**

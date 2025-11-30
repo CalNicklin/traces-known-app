@@ -5,7 +5,10 @@
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./src/*"]
+      "~/*": ["./src/*"],
+      "@acme/api": ["../../packages/api/src/index.ts"],
+      "@acme/api/*": ["../../packages/api/src/*"],
+      "@acme/api/sdui-schema": ["../../packages/api/src/sdui-schema"]
     },
     "plugins": [{ "name": "next" }],
     "module": "esnext"

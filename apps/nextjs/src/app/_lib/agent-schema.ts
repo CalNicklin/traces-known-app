@@ -1,4 +1,12 @@
-import { z } from "zod/v4";
+import { z } from "zod";
+
+import type { SduiScreen } from "~/types/sdui";
+
+// Use dynamic import to get the runtime schema, avoiding zod/v4 resolution issues
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { screenSchema } = require("@acme/api/sdui-schema") as {
+  screenSchema: z.ZodType<SduiScreen>;
+};
 
 export const AgentRoleSchema = z.enum(["assistant", "user", "system"]);
 
@@ -70,7 +78,7 @@ export const AgentTextBlockSchema = z.object({
   text: z.string(),
 });
 
-export const AgentBlockSchema = z.discriminatedUnion("kind", [
+export const AgentBlockSchema = z.union([
   AgentTextBlockSchema,
   AgentComponentBlockSchema,
 ]);
@@ -87,6 +95,23 @@ export const AgentResponseSchema = z.object({
       source: z.enum(["stub", "openai"]).default("stub"),
     })
     .optional(),
+  view: z
+    .unknown()
+    .transform((value, ctx) => {
+      if (value === undefined || value === null) {
+        return undefined;
+      }
+      const parsed = screenSchema.safeParse(value);
+      if (!parsed.success) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Invalid SDUI screen payload",
+        });
+        return undefined;
+      }
+      return parsed.data;
+    })
+    .optional(),
 });
 
 export type AgentRole = z.infer<typeof AgentRoleSchema>;
@@ -94,4 +119,3 @@ export type AgentComponentType = z.infer<typeof AgentComponentTypeSchema>;
 export type AgentBlock = z.infer<typeof AgentBlockSchema>;
 export type AgentResponse = z.infer<typeof AgentResponseSchema>;
 export type AgentRequest = z.infer<typeof AgentRequestSchema>;
-

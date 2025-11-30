@@ -7,6 +7,18 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
+    },
+    "./sdui-schema": {
+      "types": "./dist/sdui-schema.d.ts",
+      "default": "./src/sdui-schema.ts"
+    },
+    "./mcp/sdui-server": {
+      "types": "./dist/mcp/sdui-server.d.ts",
+      "default": "./src/mcp/sdui-server.ts"
+    },
+    "./mcp/trpc-server": {
+      "types": "./dist/mcp/trpc-server.d.ts",
+      "default": "./src/mcp/trpc-server.ts"
     }
   },
   "license": "MIT",
