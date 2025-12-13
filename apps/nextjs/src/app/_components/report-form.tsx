@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { useDebouncedCallback } from "use-debounce";
 import { z } from "zod/v4";
 
-import { ProductFormSchema } from "@acme/db/schema";
+import type { ProductFormSchema } from "@acme/db/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 import {

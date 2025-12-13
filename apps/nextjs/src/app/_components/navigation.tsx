@@ -1,10 +1,9 @@
-import { headers } from "next/headers";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 import { Button } from "@acme/ui/button";
 
-import { auth, getSession } from "~/auth/server";
+import { getSession } from "~/auth/server";
+import { signOutAction } from "../_actions/sign-out";
 
 export async function Navigation() {
   const session = await getSession();
@@ -47,15 +46,7 @@ export async function Navigation() {
             </span>
           </div>
 
-          <form
-            action={async () => {
-              "use server";
-              await auth.api.signOut({
-                headers: await headers(),
-              });
-              redirect("/");
-            }}
-          >
+          <form action={signOutAction}>
             <Button variant="outline" size="sm">
               Sign Out
             </Button>

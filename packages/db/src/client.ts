@@ -1,5 +1,5 @@
-import { sql } from "@vercel/postgres";
-import { drizzle } from "drizzle-orm/vercel-postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 
 import * as allergenSchema from "./schema/allergen-schema";
 import * as authSchema from "./schema/auth-schema";
@@ -8,8 +8,20 @@ import * as productSchema from "./schema/product-schema";
 import * as relations from "./schema/relations";
 import * as reportSchema from "./schema/report-schema";
 
-export const db = drizzle({
-  client: sql,
+if (!process.env.POSTGRES_URL) {
+  throw new Error("Missing POSTGRES_URL environment variable");
+}
+
+// Supabase Transaction pooler (port 6543) doesn't support prepared statements
+// Must set prepare: false for compatibility
+const client = postgres(process.env.POSTGRES_URL, {
+  prepare: false, // Required for Supabase Transaction pooler mode
+  max: 1, // Limit connections for serverless environments
+  idle_timeout: 20, // Close idle connections after 20 seconds
+  connect_timeout: 10, // Connection timeout in seconds
+});
+
+export const db = drizzle(client, {
   schema: {
     ...authSchema,
     ...postSchema,

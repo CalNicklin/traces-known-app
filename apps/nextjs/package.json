@@ -21,13 +21,15 @@
     "@acme/validators": "workspace:*",
     "@heroicons/react": "^2.2.0",
     "@t3-oss/env-nextjs": "^0.13.6",
+    "@tanstack/react-form": "^1.27.3",
+    "@tanstack/react-form-nextjs": "^1.27.3",
     "@tanstack/react-query": "catalog:",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
     "@trpc/tanstack-react-query": "catalog:",
-    "next": "^15.3.3",
-    "react": "catalog:react19",
-    "react-dom": "catalog:react19",
+    "next": "16.0.10",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
     "superjson": "2.2.2",
     "use-debounce": "^10.0.5",
     "zod": "catalog:"
@@ -38,8 +40,8 @@
     "@acme/tailwind-config": "workspace:*",
     "@acme/tsconfig": "workspace:*",
     "@types/node": "^22.15.29",
-    "@types/react": "catalog:react19",
-    "@types/react-dom": "catalog:react19",
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
     "dotenv-cli": "^8.0.0",
     "eslint": "catalog:",
     "jiti": "^2.4.2",
@@ -47,5 +49,11 @@
     "tailwindcss": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@acme/prettier-config"
+  "prettier": "@acme/prettier-config",
+  "pnpm": {
+    "overrides": {
+      "@types/react": "19.2.7",
+      "@types/react-dom": "19.2.3"
+    }
+  }
 }

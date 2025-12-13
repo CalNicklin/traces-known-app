@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@acme/ui";
 
+import { getUserInitials } from "~/lib/user";
 import { useTRPC } from "~/trpc/react";
 
 interface ProductContentProps {
@@ -146,7 +147,7 @@ export function ProductContent({ id }: ProductContentProps) {
                                 alt={report.user.name}
                               />
                               <AvatarFallback className="text-xs">
-                                {report.user.name.charAt(0).toUpperCase()}
+                                {getUserInitials(report.user)}
                               </AvatarFallback>
                             </Avatar>
                             <span className="text-sm font-medium">

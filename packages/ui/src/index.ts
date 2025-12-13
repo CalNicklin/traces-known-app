@@ -15,6 +15,16 @@ export {
   CardHeader,
   CardTitle,
 } from "./card";
+export {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "./field";
 export { Input } from "./input";
 export { Label } from "./label";
 export { Skeleton } from "./skeleton";

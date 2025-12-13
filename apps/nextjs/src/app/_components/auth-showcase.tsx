@@ -1,10 +1,8 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-
 import { Card, CardContent } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 
-import { auth, getSession } from "~/auth/server";
+import { getSession } from "~/auth/server";
+import { signOutAction } from "../_actions/sign-out";
 import { AuthForms } from "./auth-forms";
 
 export async function AuthShowcase() {
@@ -71,13 +69,7 @@ export async function AuthShowcase() {
           size="lg"
           variant="outline"
           className="w-full"
-          formAction={async () => {
-            "use server";
-            await auth.api.signOut({
-              headers: await headers(),
-            });
-            redirect("/");
-          }}
+          formAction={signOutAction}
         >
           Sign Out
         </Button>

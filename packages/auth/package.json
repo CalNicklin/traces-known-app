@@ -3,14 +3,28 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "types": "./dist/src/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./middleware": "./src/middleware.ts",
-    "./client": "./src/client.ts",
-    "./env": "./env.ts"
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./validation": {
+      "types": "./dist/src/validation.d.ts",
+      "default": "./src/validation.ts"
+    },
+    "./server": {
+      "types": "./dist/src/server.d.ts",
+      "default": "./src/server.ts"
+    },
+    "./env": {
+      "types": "./dist/env.d.ts",
+      "default": "./env.ts"
+    }
   },
   "license": "MIT",
   "scripts": {
+    "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
@@ -22,7 +36,7 @@
     "@better-auth/expo": "1.2.9",
     "@t3-oss/env-nextjs": "^0.13.6",
     "better-auth": "1.2.9",
-    "next": "^15.3.3",
+    "next": "16.0.10",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
     "zod": "catalog:"

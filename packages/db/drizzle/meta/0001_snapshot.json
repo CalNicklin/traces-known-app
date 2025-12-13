@@ -1,6 +1,6 @@
 {
-  "id": "415674dd-0d38-4845-ab6e-91539372546c",
-  "prevId": "3fde2e03-ffd1-4adc-a4b9-db1cc8a9a2a7",
+  "id": "c518d104-3b30-44ea-9995-1ae66eb618ed",
+  "prevId": "642c1700-2edc-48e6-894a-8722ffbed647",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -228,6 +228,18 @@
           "primaryKey": false,
           "notNull": false
         },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "display_username": {
+          "name": "display_username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -250,6 +262,20 @@
           "nullsNotDistinct": false,
           "columns": [
             "email"
+          ]
+        },
+        "user_username_unique": {
+          "name": "user_username_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "username"
+          ]
+        },
+        "user_displayUsername_unique": {
+          "name": "user_displayUsername_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "display_username"
           ]
         }
       },
@@ -359,6 +385,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -366,12 +399,11 @@
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "deleted_at": {
+          "name": "deleted_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
+          "notNull": false
         }
       },
       "indexes": {},

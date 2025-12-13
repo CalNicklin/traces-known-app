@@ -1,8 +1,8 @@
 "use client";
 
+import type { z } from "zod/v4";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod/v4";
 
 import { ProductFormSchema } from "@acme/db/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@acme/ui";
@@ -49,13 +49,21 @@ export function AddProductForm({
 
   const handleSubmit = (data: ProductFormData) => {
     // Clean up empty string values
-    const cleanedData = {
+    const barcode = data.barcode?.trim() ?? "";
+    const brand = data.brand?.trim() ?? "";
+    const allergenWarning = data.allergenWarning?.trim() ?? "";
+    const imageUrl = data.imageUrl?.trim() ?? "";
+    const ingredients = (data.ingredients ?? [])
+      .map((ingredient) => ingredient.trim())
+      .filter((ingredient) => ingredient.length > 0);
+
+    const cleanedData: ProductFormData = {
       ...data,
-      barcode: data.barcode || undefined,
-      brand: data.brand || undefined,
-      allergenWarning: data.allergenWarning || undefined,
-      imageUrl: data.imageUrl || undefined,
-      ingredients: data.ingredients?.filter(Boolean) || undefined,
+      barcode: barcode === "" ? undefined : barcode,
+      brand: brand === "" ? undefined : brand,
+      allergenWarning: allergenWarning === "" ? undefined : allergenWarning,
+      imageUrl: imageUrl === "" ? undefined : imageUrl,
+      ingredients: ingredients.length > 0 ? ingredients : undefined,
     };
     onSubmit(cleanedData);
   };
