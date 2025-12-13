@@ -61,6 +61,3 @@ export const signUpSchema = UserInsertSchema.pick({
 
 export type SignInFormValues = z.infer<typeof signInSchema>;
 export type SignUpFormValues = z.infer<typeof signUpSchema>;
-
-
-
