@@ -99,3 +99,4 @@ export function ProductCarouselSkeleton({ title }: { title: string }) {
     </section>
   );
 }
+

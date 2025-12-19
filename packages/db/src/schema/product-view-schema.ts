@@ -33,3 +33,4 @@ export const CreateProductViewSchema = createInsertSchema(ProductView, {
 });
 
 export const SelectProductViewSchema = createSelectSchema(ProductView);
+

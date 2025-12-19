@@ -96,3 +96,4 @@ export const categoryRouter = {
         );
     }),
 } satisfies TRPCRouterRecord;
+

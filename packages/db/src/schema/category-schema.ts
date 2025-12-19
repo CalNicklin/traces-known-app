@@ -46,3 +46,4 @@ export const CreateCategorySchema = createInsertSchema(Category, {
 
 export const SelectCategorySchema = createSelectSchema(Category);
 export const SelectProductCategorySchema = createSelectSchema(ProductCategory);
+
