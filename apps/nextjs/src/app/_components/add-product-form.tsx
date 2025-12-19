@@ -153,14 +153,19 @@ export function AddProductForm({
               name="allergenWarning"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Allergen Warning</FormLabel>
+                  <FormLabel>Package Allergen Warning</FormLabel>
                   <FormControl>
                     <textarea
                       {...field}
-                      placeholder="e.g., Contains milk. May contain nuts."
+                      placeholder="e.g., Contains milk. May contain traces of nuts."
                       className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     />
                   </FormControl>
+                  <FormDescription>
+                    Copy the allergen statement from the product packaging. For
+                    personal allergy experiences, submit a report after adding
+                    the product.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

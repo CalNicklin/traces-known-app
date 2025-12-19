@@ -1,0 +1,143 @@
+# Traces Known - Project Directory Guide
+
+Quick reference for project structure and conventions.
+
+## MCP Servers (AI Assistants)
+
+**Always consult these MCPs before making assumptions:**
+
+| MCP        | Purpose                                      |
+| ---------- | -------------------------------------------- |
+| `supabase` | Database queries, RLS policies, Supabase API |
+| `nextjs`   | Next.js docs, App Router patterns            |
+| `context7` | General library documentation lookup         |
+| `shadcn`   | UI component patterns and usage              |
+
+These are configured in `.cursor/mcp.json`.
+
+### MCP Workflow (REQUIRED)
+
+1. **Before implementing**: Query relevant MCPs to understand current best practices
+   - Next.js features → `nextjs` MCP
+   - Database/Supabase → `supabase` MCP
+   - Library APIs (drizzle, tRPC, etc.) → `context7` MCP
+   - UI components → `shadcn` MCP
+
+2. **After implementing**: Use MCPs to verify your work
+   - `supabase`: Check tables, run test queries, verify schema
+   - `nextjs`: Use `nextjs_index` to discover running servers, `nextjs_call` to check for errors
+   - Start the dev server and use browser automation if needed
+
+3. **When debugging**: Query MCPs for up-to-date error patterns and solutions
+
+**Do not rely on cached knowledge.** Documentation changes. Always verify.
+
+## Monorepo Structure
+
+```
+traces-known/
+├── apps/
+│   ├── expo/          # React Native mobile app
+│   └── nextjs/        # Next.js web app
+├── packages/
+│   ├── api/           # tRPC routers and procedures
+│   ├── auth/          # Authentication (better-auth)
+│   ├── db/            # Drizzle ORM, schemas, migrations
+│   ├── ui/            # Shared UI components (shadcn/ui)
+│   └── validators/    # Shared Zod validators
+└── tooling/           # Shared configs (eslint, prettier, tailwind, typescript)
+```
+
+## Key Conventions
+
+### Icons
+
+**Use `@radix-ui/react-icons`** - available via `@acme/ui` package dependency.
+
+```tsx
+// ✅ Correct
+import { ChevronDownIcon, ChevronUpIcon } from "@radix-ui/react-icons";
+// ❌ Wrong - lucide-react is NOT a project dependency
+import { ChevronDown } from "lucide-react";
+```
+
+### UI Components
+
+Import from `@acme/ui`:
+
+```tsx
+import { Button, Card, CardContent, Input } from "@acme/ui";
+import { Form, FormField, FormItem } from "@acme/ui/form";
+import { toast } from "@acme/ui/toast";
+```
+
+### Database / Schema
+
+- Schemas live in `packages/db/src/schema/`
+- Relations consolidated in `relations.ts` (one `relations()` call per table)
+- Use Drizzle ORM with Supabase
+- **Database schema name is `app`** (not `public`) - tables are `app.product`, `app.user`, etc.
+
+### API (tRPC)
+
+- Routers in `packages/api/src/router/`
+- Root router in `packages/api/src/root.ts`
+- Use `publicProcedure` or `protectedProcedure` from `../trpc`
+
+### Package Rebuilds (IMPORTANT)
+
+**After modifying any file in `packages/`**, you must rebuild for types to propagate:
+
+```bash
+pnpm build --filter=@acme/api   # After changing API/tRPC routers
+pnpm build --filter=@acme/db    # After changing schemas/relations
+pnpm build --filter=@acme/ui    # After changing UI components
+```
+
+Or rebuild all packages:
+
+```bash
+pnpm build --filter="./packages/*"
+```
+
+**After rebuilding**, restart TypeScript server in Cursor: `Cmd+Shift+P` → "TypeScript: Restart TS Server"
+
+Without rebuilding, consuming apps (e.g., `apps/nextjs`) will show type errors.
+
+### Authentication
+
+- Uses `better-auth`
+- Server: `~/auth/server` → `getSession()`
+- Client: `~/auth/client` → `authClient`
+
+### Data Fetching (Next.js)
+
+- tRPC via React Query
+- Use `useSuspenseQuery` for data in Suspense boundaries
+- Use `useQuery` for optional/conditional data
+- Access tRPC: `const trpc = useTRPC();`
+
+## Package Aliases
+
+| Alias              | Path                     |
+| ------------------ | ------------------------ |
+| `@acme/ui`         | `packages/ui`            |
+| `@acme/db`         | `packages/db`            |
+| `@acme/db/schema`  | `packages/db/src/schema` |
+| `@acme/api`        | `packages/api`           |
+| `@acme/auth`       | `packages/auth`          |
+| `@acme/validators` | `packages/validators`    |
+
+## Next.js App Structure
+
+```
+apps/nextjs/src/
+├── app/
+│   ├── _actions/      # Server actions
+│   ├── _components/   # Page-specific components
+│   ├── api/           # API routes (tRPC, auth)
+│   └── [routes]/      # Page routes
+├── auth/              # Auth client/server exports
+├── lib/               # Utilities
+└── trpc/              # tRPC client setup
+```

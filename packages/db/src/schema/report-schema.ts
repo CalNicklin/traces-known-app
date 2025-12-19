@@ -1,4 +1,3 @@
-import { relations } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -35,25 +34,7 @@ export const ReportAllergen = appSchema.table("report_allergen", (t) => ({
     .references(() => Allergen.id, { onDelete: "cascade" }),
 }));
 
-// Relations
-export const ReportRelations = relations(Report, ({ one, many }) => ({
-  user: one(user, {
-    fields: [Report.userId],
-    references: [user.id],
-  }),
-  product: one(Product, {
-    fields: [Report.productId],
-    references: [Product.id],
-  }),
-  reportAllergens: many(ReportAllergen),
-}));
-
-export const ReportAllergenRelations = relations(ReportAllergen, ({ one }) => ({
-  report: one(Report, {
-    fields: [ReportAllergen.reportId],
-    references: [Report.id],
-  }),
-}));
+// Relations are defined in relations.ts to avoid duplicate definitions
 
 // Schemas
 export const CreateReportSchema = createInsertSchema(Report, {

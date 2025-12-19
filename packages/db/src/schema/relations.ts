@@ -1,16 +1,22 @@
 import { relations } from "drizzle-orm";
 
-import { Allergen, ProductAllergen } from "./allergen-schema";
+import { Allergen, ProductAllergen, UserAllergen } from "./allergen-schema";
 import { user } from "./auth-schema";
 import { Product } from "./product-schema";
 import { Report, ReportAllergen } from "./report-schema";
 
-// Cross-module relations
+// =============================================================================
+// All relations consolidated here to avoid duplicate definitions
+// Drizzle requires exactly ONE relations() call per table
+// =============================================================================
+
+// Product relations
 export const ProductRelations = relations(Product, ({ many }) => ({
   productAllergens: many(ProductAllergen),
   reports: many(Report),
 }));
 
+// ProductAllergen relations (junction table)
 export const ProductAllergenRelations = relations(
   ProductAllergen,
   ({ one }) => ({
@@ -25,7 +31,8 @@ export const ProductAllergenRelations = relations(
   }),
 );
 
-export const ReportProductRelations = relations(Report, ({ one }) => ({
+// Report relations
+export const ReportRelations = relations(Report, ({ one, many }) => ({
   product: one(Product, {
     fields: [Report.productId],
     references: [Product.id],
@@ -34,19 +41,42 @@ export const ReportProductRelations = relations(Report, ({ one }) => ({
     fields: [Report.userId],
     references: [user.id],
   }),
+  reportAllergens: many(ReportAllergen),
 }));
 
-export const ReportAllergenAllergenRelations = relations(
-  ReportAllergen,
-  ({ one }) => ({
-    allergen: one(Allergen, {
-      fields: [ReportAllergen.allergenId],
-      references: [Allergen.id],
-    }),
+// ReportAllergen relations (junction table)
+export const ReportAllergenRelations = relations(ReportAllergen, ({ one }) => ({
+  report: one(Report, {
+    fields: [ReportAllergen.reportId],
+    references: [Report.id],
   }),
-);
+  allergen: one(Allergen, {
+    fields: [ReportAllergen.allergenId],
+    references: [Allergen.id],
+  }),
+}));
 
-// Update AllergenRelations to include report allergens
-export const AllergenReportRelations = relations(Allergen, ({ many }) => ({
+// Allergen relations
+export const AllergenRelations = relations(Allergen, ({ many }) => ({
+  productAllergens: many(ProductAllergen),
+  userAllergens: many(UserAllergen),
   reportAllergens: many(ReportAllergen),
+}));
+
+// UserAllergen relations (junction table)
+export const UserAllergenRelations = relations(UserAllergen, ({ one }) => ({
+  user: one(user, {
+    fields: [UserAllergen.userId],
+    references: [user.id],
+  }),
+  allergen: one(Allergen, {
+    fields: [UserAllergen.allergenId],
+    references: [Allergen.id],
+  }),
+}));
+
+// User relations
+export const UserRelations = relations(user, ({ many }) => ({
+  userAllergens: many(UserAllergen),
+  reports: many(Report),
 }));

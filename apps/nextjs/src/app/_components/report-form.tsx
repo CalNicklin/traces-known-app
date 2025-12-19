@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ChevronDownIcon, ChevronUpIcon } from "@radix-ui/react-icons";
 import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { useDebouncedCallback } from "use-debounce";
@@ -42,7 +43,16 @@ interface ProductSearchResult {
   barcode?: string | null;
 }
 
-export function ReportForm() {
+interface Allergen {
+  id: string;
+  name: string;
+}
+
+interface ReportFormProps {
+  productId?: string;
+}
+
+export function ReportForm({ productId }: ReportFormProps) {
   const trpc = useTRPC();
 
   const [productSearch, setProductSearch] = useState("");
@@ -51,6 +61,7 @@ export function ReportForm() {
     useState<ProductSearchResult | null>(null);
   const [showProductResults, setShowProductResults] = useState(false);
   const [showAddProductForm, setShowAddProductForm] = useState(false);
+  const [showAllAllergens, setShowAllAllergens] = useState(false);
 
   // Debounced search function
   const handleSearchChange = useDebouncedCallback((term: string) => {
@@ -58,15 +69,44 @@ export function ReportForm() {
   }, 300);
 
   // Get all allergens for selection
-  const { data: allergens } = useSuspenseQuery(
+  const { data: allAllergensResponse } = useSuspenseQuery(
     trpc.allergen.all.queryOptions(),
   );
+
+  // Get user's allergens (protected route - will return empty if not logged in)
+  const { data: myAllergensResponse } = useQuery(
+    trpc.allergen.myAllergens.queryOptions(),
+  );
+
+  // Fetch pre-selected product if productId is provided
+  const { data: preSelectedProduct } = useQuery({
+    ...trpc.product.byId.queryOptions({ id: productId ?? "" }),
+    enabled: Boolean(productId),
+  });
 
   // Search products based on debounced input
   const { data: searchResults = [] } = useQuery({
     ...trpc.product.byName.queryOptions({ name: debouncedSearch }),
     enabled: debouncedSearch.length > 2,
   });
+
+  // Extract allergen data and messages from responses
+  const allAllergens = allAllergensResponse.items;
+  const allAllergensEmptyMessage = allAllergensResponse.emptyMessage;
+  const myAllergens = myAllergensResponse?.items ?? [];
+  const myAllergensEmptyMessage = myAllergensResponse?.emptyMessage;
+
+  // Compute allergen lists: user's allergens first, then others
+  const myAllergenIds = new Set(myAllergens.map((a) => a.id));
+  const otherAllergens = allAllergens.filter((a) => !myAllergenIds.has(a.id));
+  const hasUserAllergens = myAllergens.length > 0;
+
+  // Handle pre-selected product from URL param
+  useEffect(() => {
+    if (preSelectedProduct && !selectedProduct) {
+      setSelectedProduct(preSelectedProduct);
+    }
+  }, [preSelectedProduct, selectedProduct]);
 
   const form = useForm<ReportFormData>({
     resolver: zodResolver(ReportFormSchema),
@@ -259,44 +299,111 @@ export function ReportForm() {
               <FormField
                 control={form.control}
                 name="allergenIds"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Allergens You Reacted To</FormLabel>
-                    <FormDescription>
-                      Select all allergens that caused a reaction
-                    </FormDescription>
-                    <FormControl>
-                      <div className="grid grid-cols-2 gap-2">
-                        {allergens.map((allergen) => (
-                          <label
-                            key={allergen.id}
-                            className="flex cursor-pointer items-center space-x-2 rounded-md border p-2 hover:bg-muted"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={
-                                field.value?.includes(allergen.id) ?? false
-                              }
-                              onChange={(e) => {
-                                const current = field.value ?? [];
-                                if (e.target.checked) {
-                                  field.onChange([...current, allergen.id]);
-                                } else {
-                                  field.onChange(
-                                    current.filter((id) => id !== allergen.id),
-                                  );
+                render={({ field }) => {
+                  const renderAllergenCheckbox = (allergen: Allergen) => (
+                    <label
+                      key={allergen.id}
+                      className="flex cursor-pointer items-center space-x-2 rounded-md border p-2 hover:bg-muted"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={field.value?.includes(allergen.id) ?? false}
+                        onChange={(e) => {
+                          const current = field.value ?? [];
+                          if (e.target.checked) {
+                            field.onChange([...current, allergen.id]);
+                          } else {
+                            field.onChange(
+                              current.filter((id) => id !== allergen.id),
+                            );
+                          }
+                        }}
+                        className="rounded border-gray-300"
+                      />
+                      <span className="text-sm">{allergen.name}</span>
+                    </label>
+                  );
+
+                  // Handle empty states
+                  if (allAllergensEmptyMessage) {
+                    return (
+                      <FormItem>
+                        <FormLabel>Allergens You Reacted To</FormLabel>
+                        <div className="rounded-lg border border-dashed p-4 text-center">
+                          <p className="text-sm text-muted-foreground">
+                            {allAllergensEmptyMessage}
+                          </p>
+                        </div>
+                      </FormItem>
+                    );
+                  }
+
+                  return (
+                    <FormItem>
+                      <FormLabel>Allergens You Reacted To</FormLabel>
+                      <FormDescription>
+                        Select all allergens that caused a reaction
+                      </FormDescription>
+                      <FormControl>
+                        <div className="space-y-4">
+                          {/* User's allergens (shown first if they have any) */}
+                          {hasUserAllergens ? (
+                            <div className="space-y-2">
+                              <div className="text-sm font-medium text-muted-foreground">
+                                Your Allergens
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                {myAllergens.map(renderAllergenCheckbox)}
+                              </div>
+                            </div>
+                          ) : myAllergensEmptyMessage ? (
+                            <div className="rounded-lg border border-dashed bg-muted/50 p-3 text-center">
+                              <p className="text-sm text-muted-foreground">
+                                {myAllergensEmptyMessage}
+                              </p>
+                            </div>
+                          ) : null}
+
+                          {/* Show all / Other allergens */}
+                          {hasUserAllergens ? (
+                            <div className="space-y-2">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setShowAllAllergens(!showAllAllergens)
                                 }
-                              }}
-                              className="rounded border-gray-300"
-                            />
-                            <span className="text-sm">{allergen.name}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                                className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
+                              >
+                                {showAllAllergens ? (
+                                  <>
+                                    <ChevronUpIcon className="size-4" />
+                                    Hide other allergens
+                                  </>
+                                ) : (
+                                  <>
+                                    <ChevronDownIcon className="size-4" />
+                                    Show all allergens
+                                  </>
+                                )}
+                              </button>
+                              {showAllAllergens && (
+                                <div className="grid grid-cols-2 gap-2">
+                                  {otherAllergens.map(renderAllergenCheckbox)}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            /* No user allergens - show all */
+                            <div className="grid grid-cols-2 gap-2">
+                              {allAllergens.map(renderAllergenCheckbox)}
+                            </div>
+                          )}
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
 
               {/* Comment */}

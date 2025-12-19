@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
@@ -13,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@acme/ui";
+import { Button } from "@acme/ui/button";
 
 import { getUserInitials } from "~/lib/user";
 import { useTRPC } from "~/trpc/react";
@@ -38,11 +40,16 @@ export function ProductContent({ id }: ProductContentProps) {
 
   return (
     <div className="space-y-6">
-      <div className="border-b pb-4">
-        <h1 className="text-3xl font-bold">{product.name}</h1>
-        {product.barcode && (
-          <p className="text-muted-foreground">Barcode: {product.barcode}</p>
-        )}
+      <div className="flex items-start justify-between border-b pb-4">
+        <div>
+          <h1 className="text-3xl font-bold">{product.name}</h1>
+          {product.barcode && (
+            <p className="text-muted-foreground">Barcode: {product.barcode}</p>
+          )}
+        </div>
+        <Button asChild>
+          <Link href={`/report?productId=${id}`}>Report Allergy Reaction</Link>
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

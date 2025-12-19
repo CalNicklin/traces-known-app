@@ -43,6 +43,7 @@
     "eslint": "catalog:",
     "prettier": "catalog:",
     "react": "catalog:react19",
+    "shadcn": "^3.6.2",
     "typescript": "catalog:",
     "zod": "catalog:"
   },

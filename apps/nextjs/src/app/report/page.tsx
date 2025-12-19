@@ -5,6 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle, Skeleton } from "@acme/ui";
 import { ReportForm } from "~/app/_components/report-form";
 import { getSession } from "~/auth/server";
 
+interface ReportPageProps {
+  searchParams: Promise<{ productId?: string }>;
+}
+
 function ReportFormSkeleton() {
   return (
     <Card className="mx-auto w-full max-w-2xl">
@@ -35,7 +39,8 @@ function ReportFormSkeleton() {
   );
 }
 
-export default async function ReportPage() {
+export default async function ReportPage({ searchParams }: ReportPageProps) {
+  const { productId } = await searchParams;
   const session = await getSession();
 
   if (!session) {
@@ -70,36 +75,9 @@ export default async function ReportPage() {
           </p>
         </div>
 
-        {/* Help Cards */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Help the Community</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Your reports help others identify potentially dangerous products
-                and make safer food choices.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Anonymous & Safe</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Reports are associated with your account but displayed safely to
-                protect your privacy.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Report Form */}
         <Suspense fallback={<ReportFormSkeleton />}>
-          <ReportForm />
+          <ReportForm productId={productId} />
         </Suspense>
       </div>
     </div>
