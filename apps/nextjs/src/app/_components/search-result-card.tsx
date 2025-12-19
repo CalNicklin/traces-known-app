@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import type { RouterOutputs } from "@acme/api";
-import { Badge, Card } from "@acme/ui";
+import { Badge, Card, Text } from "@acme/ui";
 
 type SearchResultProduct = RouterOutputs["product"]["search"][0];
 
@@ -26,18 +26,23 @@ export function SearchResultCard({ product }: SearchResultCardProps) {
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-muted">
-                <span className="text-xs text-muted-foreground">No image</span>
+                <Text variant="caption">No image</Text>
               </div>
             )}
           </div>
 
           <div className="flex-1 space-y-1">
-            <h3 className="font-semibold text-foreground group-hover:text-primary">
+            <Text
+              variant="small"
+              className="font-semibold text-foreground group-hover:text-primary"
+            >
               {product.name}
-            </h3>
+            </Text>
 
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              {product.barcode && <span>Barcode: {product.barcode}</span>}
+            <div className="flex items-center gap-2">
+              {product.barcode && (
+                <Text variant="muted">Barcode: {product.barcode}</Text>
+              )}
               {product.inDb && (
                 <Badge
                   variant="secondary"

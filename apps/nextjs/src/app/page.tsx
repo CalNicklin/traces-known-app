@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Card, CardContent } from "@acme/ui";
+import { Card, CardContent, Text } from "@acme/ui";
 
 import { getSession } from "~/auth/server";
 import { AuthShowcase } from "./_components/auth-showcase";
@@ -14,13 +14,16 @@ export default async function HomePage() {
       <main className="container min-h-screen py-16">
         <div className="flex min-h-[80vh] flex-col items-center justify-center gap-8">
           <div className="space-y-4 text-center">
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl">
-              Traces <span className="text-primary">Known</span>
-            </h1>
-            <p className="max-w-2xl text-lg text-muted-foreground">
+            <Text variant="h1" className="sm:text-6xl">
+              Traces{" "}
+              <Text as="span" variant="h1" className="text-primary">
+                Known
+              </Text>
+            </Text>
+            <Text variant="lead" className="max-w-2xl">
               Track and share allergy reactions to help others with similar
               allergies make informed food choices.
-            </p>
+            </Text>
           </div>
           <AuthShowcase />
         </div>
@@ -33,12 +36,10 @@ export default async function HomePage() {
     <main className="container py-8">
       <div className="mx-auto max-w-4xl">
         <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold">
+          <Text variant="h2" className="mb-2">
             Welcome back, {session.user.name}!
-          </h1>
-          <p className="text-muted-foreground">
-            What would you like to do today?
-          </p>
+          </Text>
+          <Text variant="muted">What would you like to do today?</Text>
         </div>
 
         <div className="grid max-w-2xl grid-cols-1 gap-6 md:grid-cols-2">
@@ -61,14 +62,17 @@ export default async function HomePage() {
                       />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-semibold transition-colors group-hover:text-primary">
+                  <Text
+                    variant="h4"
+                    className="transition-colors group-hover:text-primary"
+                  >
                     Lookup →
-                  </h3>
+                  </Text>
                 </div>
-                <p className="leading-relaxed text-muted-foreground">
+                <Text variant="muted" className="leading-relaxed">
                   Check if people with the same allergies as you have reported
                   an item that you want to eat.
-                </p>
+                </Text>
               </CardContent>
             </Card>
           </Link>
@@ -92,14 +96,17 @@ export default async function HomePage() {
                       />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-semibold transition-colors group-hover:text-destructive">
+                  <Text
+                    variant="h4"
+                    className="transition-colors group-hover:text-destructive"
+                  >
                     Report →
-                  </h3>
+                  </Text>
                 </div>
-                <p className="leading-relaxed text-muted-foreground">
+                <Text variant="muted" className="leading-relaxed">
                   Report your allergy symptoms after eating a product so others
                   can review before they eat.
-                </p>
+                </Text>
               </CardContent>
             </Card>
           </Link>
@@ -108,11 +115,13 @@ export default async function HomePage() {
         {/* Quick stats or recent activity could go here */}
         <Card className="mt-12 bg-muted/50">
           <CardContent className="p-6">
-            <h2 className="mb-2 text-lg font-semibold">Getting Started</h2>
-            <p className="text-sm text-muted-foreground">
+            <Text variant="large" className="mb-2">
+              Getting Started
+            </Text>
+            <Text variant="muted">
               Start by looking up products you're considering eating, or report
               any reactions you've had to help the community.
-            </p>
+            </Text>
           </CardContent>
         </Card>
       </div>

@@ -1,4 +1,4 @@
-import { Card, CardContent } from "@acme/ui";
+import { Card, CardContent, Text } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 
 import { getSession } from "~/auth/server";
@@ -29,37 +29,31 @@ export async function AuthShowcase() {
             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
           />
         </svg>
-        <span className="text-lg font-semibold">Successfully Signed In!</span>
+        <Text variant="large">Successfully Signed In!</Text>
       </div>
 
       {/* User info card */}
       <Card>
         <CardContent className="space-y-4 p-6">
           <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Welcome back!</h3>
-            <p className="text-muted-foreground">
-              You are currently signed in as:
-            </p>
+            <Text variant="large">Welcome back!</Text>
+            <Text variant="muted">You are currently signed in as:</Text>
           </div>
 
           <div className="rounded-r border-l-4 border-primary bg-muted/50 py-2 pl-4">
             <div className="space-y-1">
-              <p className="text-lg font-medium">{session.user.name}</p>
-              <p className="text-sm text-muted-foreground">
-                {session.user.email}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                User ID: {session.user.id}
-              </p>
+              <Text variant="large" className="font-medium">
+                {session.user.name}
+              </Text>
+              <Text variant="muted">{session.user.email}</Text>
+              <Text variant="caption">User ID: {session.user.id}</Text>
             </div>
           </div>
 
-          <div className="text-xs text-muted-foreground">
-            <p>
-              Session expires:{" "}
-              {new Date(session.session.expiresAt).toLocaleString()}
-            </p>
-          </div>
+          <Text variant="caption">
+            Session expires:{" "}
+            {new Date(session.session.expiresAt).toLocaleString()}
+          </Text>
         </CardContent>
       </Card>
 

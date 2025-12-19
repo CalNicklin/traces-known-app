@@ -9,7 +9,7 @@ import { useDebouncedCallback } from "use-debounce";
 import { z } from "zod/v4";
 
 import type { ProductFormSchema } from "@acme/db/schema";
-import { Card, CardContent, CardHeader, CardTitle } from "@acme/ui";
+import { Card, CardContent, CardHeader, CardTitle, Text } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 import {
   Form,
@@ -238,27 +238,25 @@ export function ReportForm({ productId }: ReportFormProps) {
                                   onClick={() => handleProductSelect(product)}
                                 >
                                   <div>
-                                    <div className="font-medium">
-                                      {product.name}
-                                    </div>
+                                    <Text variant="small">{product.name}</Text>
                                     {product.brand && (
-                                      <div className="text-xs text-muted-foreground">
+                                      <Text variant="caption">
                                         {product.brand}
-                                      </div>
+                                      </Text>
                                     )}
                                     {product.barcode && (
-                                      <div className="text-xs text-muted-foreground">
+                                      <Text variant="caption">
                                         Barcode: {product.barcode}
-                                      </div>
+                                      </Text>
                                     )}
                                   </div>
                                 </button>
                               ))
                             ) : (
                               <div className="p-3">
-                                <p className="mb-2 text-sm text-muted-foreground">
+                                <Text variant="muted" className="mb-2">
                                   No products found for "{debouncedSearch}"
-                                </p>
+                                </Text>
                                 <Button
                                   type="button"
                                   size="sm"
@@ -287,11 +285,11 @@ export function ReportForm({ productId }: ReportFormProps) {
               {/* Selected Product Display */}
               {selectedProduct && (
                 <div className="rounded-lg border bg-muted/50 p-3">
-                  <div className="text-sm font-medium">Selected Product:</div>
-                  <div className="text-sm text-muted-foreground">
+                  <Text variant="small">Selected Product:</Text>
+                  <Text variant="muted">
                     {selectedProduct.name}
                     {selectedProduct.brand && ` - ${selectedProduct.brand}`}
-                  </div>
+                  </Text>
                 </div>
               )}
 
@@ -320,7 +318,7 @@ export function ReportForm({ productId }: ReportFormProps) {
                         }}
                         className="rounded border-gray-300"
                       />
-                      <span className="text-sm">{allergen.name}</span>
+                      <Text variant="muted">{allergen.name}</Text>
                     </label>
                   );
 
@@ -330,9 +328,9 @@ export function ReportForm({ productId }: ReportFormProps) {
                       <FormItem>
                         <FormLabel>Allergens You Reacted To</FormLabel>
                         <div className="rounded-lg border border-dashed p-4 text-center">
-                          <p className="text-sm text-muted-foreground">
+                          <Text variant="muted">
                             {allAllergensEmptyMessage}
-                          </p>
+                          </Text>
                         </div>
                       </FormItem>
                     );
@@ -349,18 +347,18 @@ export function ReportForm({ productId }: ReportFormProps) {
                           {/* User's allergens (shown first if they have any) */}
                           {hasUserAllergens ? (
                             <div className="space-y-2">
-                              <div className="text-sm font-medium text-muted-foreground">
+                              <Text variant="muted" className="font-medium">
                                 Your Allergens
-                              </div>
+                              </Text>
                               <div className="grid grid-cols-2 gap-2">
                                 {myAllergens.map(renderAllergenCheckbox)}
                               </div>
                             </div>
                           ) : myAllergensEmptyMessage ? (
                             <div className="rounded-lg border border-dashed bg-muted/50 p-3 text-center">
-                              <p className="text-sm text-muted-foreground">
+                              <Text variant="muted">
                                 {myAllergensEmptyMessage}
-                              </p>
+                              </Text>
                             </div>
                           ) : null}
 

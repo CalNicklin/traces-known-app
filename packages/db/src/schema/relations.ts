@@ -2,7 +2,9 @@ import { relations } from "drizzle-orm";
 
 import { Allergen, ProductAllergen, UserAllergen } from "./allergen-schema";
 import { user } from "./auth-schema";
+import { Category, ProductCategory } from "./category-schema";
 import { Product } from "./product-schema";
+import { ProductView } from "./product-view-schema";
 import { Report, ReportAllergen } from "./report-schema";
 
 // =============================================================================
@@ -13,6 +15,8 @@ import { Report, ReportAllergen } from "./report-schema";
 // Product relations
 export const ProductRelations = relations(Product, ({ many }) => ({
   productAllergens: many(ProductAllergen),
+  productCategories: many(ProductCategory),
+  productViews: many(ProductView),
   reports: many(Report),
 }));
 
@@ -30,6 +34,38 @@ export const ProductAllergenRelations = relations(
     }),
   }),
 );
+
+// ProductCategory relations (junction table)
+export const ProductCategoryRelations = relations(
+  ProductCategory,
+  ({ one }) => ({
+    product: one(Product, {
+      fields: [ProductCategory.productId],
+      references: [Product.id],
+    }),
+    category: one(Category, {
+      fields: [ProductCategory.categoryId],
+      references: [Category.id],
+    }),
+  }),
+);
+
+// Category relations
+export const CategoryRelations = relations(Category, ({ many }) => ({
+  productCategories: many(ProductCategory),
+}));
+
+// ProductView relations
+export const ProductViewRelations = relations(ProductView, ({ one }) => ({
+  product: one(Product, {
+    fields: [ProductView.productId],
+    references: [Product.id],
+  }),
+  user: one(user, {
+    fields: [ProductView.userId],
+    references: [user.id],
+  }),
+}));
 
 // Report relations
 export const ReportRelations = relations(Report, ({ one, many }) => ({
@@ -79,4 +115,5 @@ export const UserAllergenRelations = relations(UserAllergen, ({ one }) => ({
 export const UserRelations = relations(user, ({ many }) => ({
   userAllergens: many(UserAllergen),
   reports: many(Report),
+  productViews: many(ProductView),
 }));

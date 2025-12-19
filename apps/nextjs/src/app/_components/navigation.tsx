@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { Text } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 
 import { getSession } from "~/auth/server";
@@ -17,33 +18,40 @@ export async function Navigation() {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center space-x-6">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-xl font-bold">
-              Traces <span className="text-primary">Known</span>
-            </span>
+            <Text variant="large" className="text-xl font-bold">
+              Traces{" "}
+              <Text as="span" variant="large" className="text-primary">
+                Known
+              </Text>
+            </Text>
           </Link>
 
           <div className="hidden items-center space-x-4 md:flex">
-            <Link
-              href="/lookup"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Lookup
+            <Link href="/lookup">
+              <Text
+                variant="small"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Lookup
+              </Text>
             </Link>
-            <Link
-              href="/report"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Report
+            <Link href="/report">
+              <Text
+                variant="small"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Report
+              </Text>
             </Link>
           </div>
         </div>
 
         <div className="flex items-center space-x-4">
-          <div className="hidden items-center space-x-2 text-sm text-muted-foreground sm:flex">
-            <span>Welcome,</span>
-            <span className="font-medium text-foreground">
+          <div className="hidden items-center space-x-2 sm:flex">
+            <Text variant="muted">Welcome,</Text>
+            <Text variant="small" className="text-foreground">
               {session.user.name}
-            </span>
+            </Text>
           </div>
 
           <form action={signOutAction}>

@@ -2,8 +2,13 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod/v4";
 
 import type { SearchResultProduct } from "@acme/db/schema";
-import { desc, eq, ilike, or } from "@acme/db";
-import { CreateProductSchema, Product } from "@acme/db/schema";
+import { desc, eq, ilike, or, sql } from "@acme/db";
+import {
+  CreateProductSchema,
+  Product,
+  ProductView,
+  Report,
+} from "@acme/db/schema";
 
 import { protectedProcedure, publicProcedure } from "../trpc";
 
@@ -103,5 +108,72 @@ export const productRouter = {
     .input(z.object({ id: z.string().uuid() }))
     .mutation(({ ctx, input }) => {
       return ctx.db.delete(Product).where(eq(Product.id, input.id));
+    }),
+
+  /** Get recently viewed products for the current user */
+  recentlyViewed: protectedProcedure
+    .input(z.object({ limit: z.number().default(10) }).optional())
+    .query(async ({ ctx, input }) => {
+      const views = await ctx.db.query.ProductView.findMany({
+        where: eq(ProductView.userId, ctx.session.user.id),
+        orderBy: desc(ProductView.viewedAt),
+        limit: input?.limit ?? 10,
+        with: {
+          product: true,
+        },
+      });
+
+      return views.map((view) => view.product);
+    }),
+
+  /** Get recently added products to the system */
+  recentlyAdded: publicProcedure
+    .input(z.object({ limit: z.number().default(10) }).optional())
+    .query(async ({ ctx, input }) => {
+      return ctx.db.query.Product.findMany({
+        orderBy: desc(Product.createdAt),
+        limit: input?.limit ?? 10,
+      });
+    }),
+
+  /** Get products the current user has reported allergies on */
+  reportedByUser: protectedProcedure
+    .input(z.object({ limit: z.number().default(20) }).optional())
+    .query(async ({ ctx, input }) => {
+      const reports = await ctx.db.query.Report.findMany({
+        where: eq(Report.userId, ctx.session.user.id),
+        orderBy: desc(Report.reportDate),
+        limit: input?.limit ?? 20,
+        with: {
+          product: true,
+        },
+      });
+
+      // Deduplicate products (user may have multiple reports on same product)
+      const productMap = new Map<string, (typeof reports)[0]["product"]>();
+      for (const report of reports) {
+        if (!productMap.has(report.product.id)) {
+          productMap.set(report.product.id, report.product);
+        }
+      }
+
+      return Array.from(productMap.values());
+    }),
+
+  /** Record a product view (upsert - updates viewedAt if exists) */
+  recordView: protectedProcedure
+    .input(z.object({ productId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db
+        .insert(ProductView)
+        .values({
+          userId: ctx.session.user.id,
+          productId: input.productId,
+          viewedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [ProductView.userId, ProductView.productId],
+          set: { viewedAt: sql`now()` },
+        });
     }),
 } satisfies TRPCRouterRecord;

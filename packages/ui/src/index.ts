@@ -28,3 +28,5 @@ export {
 export { Input } from "./input";
 export { Label } from "./label";
 export { Skeleton } from "./skeleton";
+export { Text, textVariants } from "./text";
+export type { TextProps, TextVariant, TextElement } from "./text";

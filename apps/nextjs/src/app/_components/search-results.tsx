@@ -2,20 +2,24 @@ import { Suspense } from "react";
 
 import { Card, Skeleton } from "@acme/ui";
 
+import { LookupSections } from "./lookup-sections";
 import { SearchResultsContent } from "./search-results-content";
 
 interface SearchResultsProps {
   query: string;
   currentPage: number;
+  /** Whether the user is logged in (for personalized sections) */
+  isLoggedIn: boolean;
 }
 
-export function SearchResults({ query, currentPage }: SearchResultsProps) {
+export function SearchResults({
+  query,
+  currentPage,
+  isLoggedIn,
+}: SearchResultsProps) {
+  // Show browse sections when no search query
   if (!query) {
-    return (
-      <div className="py-12 text-center text-muted-foreground">
-        <p>Enter a product name to search for allergy reports.</p>
-      </div>
-    );
+    return <LookupSections isLoggedIn={isLoggedIn} />;
   }
 
   return (

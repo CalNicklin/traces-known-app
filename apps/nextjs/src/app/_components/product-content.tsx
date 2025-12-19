@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 
 import {
   Avatar,
@@ -13,6 +14,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  Text,
 } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 
@@ -25,6 +27,15 @@ interface ProductContentProps {
 
 export function ProductContent({ id }: ProductContentProps) {
   const trpc = useTRPC();
+
+  // Record view when component mounts
+  const recordView = useMutation(trpc.product.recordView.mutationOptions());
+
+  useEffect(() => {
+    // Fire and forget - we don't need to wait for this
+    recordView.mutate({ productId: id });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only run on mount
+  }, [id]);
 
   const { data: product } = useSuspenseQuery(
     trpc.product.byId.queryOptions({ id }),
@@ -42,9 +53,9 @@ export function ProductContent({ id }: ProductContentProps) {
     <div className="space-y-6">
       <div className="flex items-start justify-between border-b pb-4">
         <div>
-          <h1 className="text-3xl font-bold">{product.name}</h1>
+          <Text variant="h2">{product.name}</Text>
           {product.barcode && (
-            <p className="text-muted-foreground">Barcode: {product.barcode}</p>
+            <Text variant="muted">Barcode: {product.barcode}</Text>
           )}
         </div>
         <Button asChild>
@@ -65,7 +76,7 @@ export function ProductContent({ id }: ProductContentProps) {
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center">
-                  <p className="text-muted-foreground">No image available</p>
+                  <Text variant="muted">No image available</Text>
                 </div>
               )}
             </div>
@@ -80,15 +91,15 @@ export function ProductContent({ id }: ProductContentProps) {
             <CardContent className="space-y-2">
               {product.brand && (
                 <div className="flex gap-2">
-                  <span className="font-medium">Brand:</span>
-                  <span className="text-muted-foreground">{product.brand}</span>
+                  <Text variant="small">Brand:</Text>
+                  <Text variant="muted">{product.brand}</Text>
                 </div>
               )}
               <div className="flex gap-2">
-                <span className="font-medium">Risk Level:</span>
-                <span className="text-muted-foreground">
+                <Text variant="small">Risk Level:</Text>
+                <Text variant="muted">
                   {product.riskLevel ?? "Not assessed"}
-                </span>
+                </Text>
               </div>
             </CardContent>
           </Card>
@@ -101,7 +112,7 @@ export function ProductContent({ id }: ProductContentProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm">{product.allergenWarning}</p>
+                <Text variant="muted">{product.allergenWarning}</Text>
               </CardContent>
             </Card>
           )}
@@ -112,9 +123,11 @@ export function ProductContent({ id }: ProductContentProps) {
                 <CardTitle>Ingredients</CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-1 text-sm">
+                <ul className="space-y-1">
                   {product.ingredients.map((ingredient, index) => (
-                    <li key={index}>• {ingredient}</li>
+                    <li key={index}>
+                      <Text variant="muted">• {ingredient}</Text>
+                    </li>
                   ))}
                 </ul>
               </CardContent>
@@ -157,36 +170,32 @@ export function ProductContent({ id }: ProductContentProps) {
                                 {getUserInitials(report.user)}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="text-sm font-medium">
-                              {report.user.name}
-                            </span>
+                            <Text variant="small">{report.user.name}</Text>
                           </div>
-                          <span className="text-xs text-muted-foreground">
+                          <Text variant="caption">
                             {new Date(report.reportDate).toLocaleDateString()}
-                          </span>
+                          </Text>
                         </div>
 
                         {report.comment && (
-                          <p className="text-sm text-muted-foreground">
-                            {report.comment}
-                          </p>
+                          <Text variant="muted">{report.comment}</Text>
                         )}
 
                         {report.allergenIds &&
                           report.allergenIds.length > 0 && (
-                            <p className="text-xs text-red-600">
+                            <Text variant="caption" className="text-red-600">
                               ⚠️ Reported allergen reaction
-                            </p>
+                            </Text>
                           )}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">
+                <Text variant="muted">
                   No community reports yet. Be the first to share your
                   experience with this product.
-                </p>
+                </Text>
               )}
             </CardContent>
           </Card>

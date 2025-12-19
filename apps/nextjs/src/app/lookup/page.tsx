@@ -52,7 +52,11 @@ export default async function LookupPage(props: {
               </div>
             }
           >
-            <SearchResults query={query} currentPage={currentPage} />
+            <SearchResults
+              query={query}
+              currentPage={currentPage}
+              isLoggedIn={!!session}
+            />
           </Suspense>
         </div>
       </div>
