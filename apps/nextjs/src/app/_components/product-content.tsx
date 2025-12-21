@@ -29,13 +29,14 @@ export function ProductContent({ id }: ProductContentProps) {
   const trpc = useTRPC();
 
   // Record view when component mounts
-  const recordView = useMutation(trpc.product.recordView.mutationOptions());
+  const { mutate: recordView } = useMutation(
+    trpc.product.recordView.mutationOptions(),
+  );
 
   useEffect(() => {
     // Fire and forget - we don't need to wait for this
-    recordView.mutate({ productId: id });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only run on mount
-  }, [id]);
+    recordView({ productId: id });
+  }, [id, recordView]);
 
   const { data: product } = useSuspenseQuery(
     trpc.product.byId.queryOptions({ id }),
@@ -117,12 +118,12 @@ export function ProductContent({ id }: ProductContentProps) {
             </Card>
           )}
 
-          {product.ingredients && product.ingredients.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Ingredients</CardTitle>
-              </CardHeader>
-              <CardContent>
+          <Card>
+            <CardHeader>
+              <CardTitle>Ingredients</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {product.ingredients && product.ingredients.length > 0 ? (
                 <ul className="space-y-1">
                   {product.ingredients.map((ingredient, index) => (
                     <li key={index}>
@@ -130,9 +131,11 @@ export function ProductContent({ id }: ProductContentProps) {
                     </li>
                   ))}
                 </ul>
-              </CardContent>
-            </Card>
-          )}
+              ) : (
+                <Text variant="muted">No ingredients information available</Text>
+              )}
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader>

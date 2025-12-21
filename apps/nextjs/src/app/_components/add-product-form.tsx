@@ -18,6 +18,8 @@ import {
 } from "@acme/ui/form";
 import { Input } from "@acme/ui/input";
 
+import { useBarcodeLookup } from "./use-barcode-lookup";
+
 type ProductFormData = z.infer<typeof ProductFormSchema>;
 
 interface AddProductFormProps {
@@ -25,6 +27,7 @@ interface AddProductFormProps {
   onSubmit: (data: ProductFormData) => void;
   onCancel: () => void;
   isLoading?: boolean;
+  onProductFound?: (productId: string) => void;
 }
 
 export function AddProductForm({
@@ -32,6 +35,7 @@ export function AddProductForm({
   onSubmit,
   onCancel,
   isLoading = false,
+  onProductFound,
 }: AddProductFormProps) {
   const form = useForm<ProductFormData>({
     resolver: zodResolver(ProductFormSchema),
@@ -46,6 +50,20 @@ export function AddProductForm({
       ...initialData,
     },
   });
+
+  // Use barcode lookup hook
+  const { barcodeLookup, setBarcodeLookup, isLookingUp, handleBarcodeLookup } =
+    useBarcodeLookup({
+      onProductFound,
+      onOpenFoodFactsData: (mappedData) => {
+        // Pre-populate form with Open Food Facts data
+        const currentValues = form.getValues();
+        form.reset({
+          ...currentValues,
+          ...mappedData,
+        } as ProductFormData);
+      },
+    });
 
   const handleSubmit = (data: ProductFormData) => {
     // Clean up empty string values
@@ -79,6 +97,38 @@ export function AddProductForm({
             onSubmit={form.handleSubmit(handleSubmit)}
             className="space-y-4"
           >
+            {/* Barcode Lookup Section */}
+            <div className="rounded-lg border bg-muted/50 p-4">
+              <label className="mb-2 block text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Lookup Product by Barcode
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  value={barcodeLookup}
+                  onChange={(e) => setBarcodeLookup(e.target.value)}
+                  placeholder="Enter barcode (e.g., 3017624010701)"
+                  disabled={isLookingUp || isLoading}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleBarcodeLookup();
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  onClick={handleBarcodeLookup}
+                  disabled={isLookingUp || isLoading || !barcodeLookup.trim()}
+                >
+                  {isLookingUp ? "Looking up..." : "Lookup"}
+                </Button>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Search Open Food Facts database to automatically fill product
+                information
+              </p>
+            </div>
+
             <FormField
               control={form.control}
               name="name"
@@ -165,6 +215,39 @@ export function AddProductForm({
                     Copy the allergen statement from the product packaging. For
                     personal allergy experiences, submit a report after adding
                     the product.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="ingredients"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ingredients</FormLabel>
+                  <FormControl>
+                    <textarea
+                      value={field.value?.join(", ") ?? ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value.trim() === "") {
+                          field.onChange([]);
+                        } else {
+                          const ingredients = value
+                            .split(/[,\n]/)
+                            .map((i) => i.trim())
+                            .filter((i) => i.length > 0);
+                          field.onChange(ingredients);
+                        }
+                      }}
+                      placeholder="e.g., Water, Almonds, Salt, Vitamin E"
+                      className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Enter ingredients separated by commas or new lines
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

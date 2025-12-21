@@ -3,7 +3,12 @@
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDownIcon, ChevronUpIcon } from "@radix-ui/react-icons";
-import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { useDebouncedCallback } from "use-debounce";
 import { z } from "zod/v4";
@@ -25,6 +30,7 @@ import { toast } from "@acme/ui/toast";
 
 import { useTRPC } from "~/trpc/react";
 import { AddProductForm } from "./add-product-form";
+import { useBarcodeLookup } from "./use-barcode-lookup";
 
 // Form schema for report submission
 const ReportFormSchema = z.object({
@@ -54,6 +60,7 @@ interface ReportFormProps {
 
 export function ReportForm({ productId }: ReportFormProps) {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
 
   const [productSearch, setProductSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -61,12 +68,34 @@ export function ReportForm({ productId }: ReportFormProps) {
     useState<ProductSearchResult | null>(null);
   const [showProductResults, setShowProductResults] = useState(false);
   const [showAddProductForm, setShowAddProductForm] = useState(false);
+  const [addProductInitialData, setAddProductInitialData] = useState<
+    Partial<z.infer<typeof ProductFormSchema>> | undefined
+  >();
   const [showAllAllergens, setShowAllAllergens] = useState(false);
 
   // Debounced search function
   const handleSearchChange = useDebouncedCallback((term: string) => {
     setDebouncedSearch(term);
   }, 300);
+
+  // Barcode lookup hook - handles product lookup from ReportForm
+  const {
+    barcodeLookup,
+    setBarcodeLookup,
+    isLookingUp: isBarcodeLookingUp,
+    handleBarcodeLookup,
+  } = useBarcodeLookup({
+    onProductFound: (productId) => {
+      // Product found in DB - select it
+      handleProductFound(productId);
+    },
+    onOpenFoodFactsData: (mappedData) => {
+      // Product found in Open Food Facts but not in DB
+      // Open AddProductForm modal with pre-filled data
+      setAddProductInitialData(mappedData);
+      setShowAddProductForm(true);
+    },
+  });
 
   // Get all allergens for selection
   const { data: allAllergensResponse } = useSuspenseQuery(
@@ -181,6 +210,28 @@ export function ReportForm({ productId }: ReportFormProps) {
     setShowProductResults(false);
   };
 
+  const handleProductFound = (productId: string) => {
+    // Product was found in DB during barcode lookup
+    // Use query client to fetch the product
+    queryClient
+      .fetchQuery(trpc.product.byId.queryOptions({ id: productId }))
+      .then((product) => {
+        if (product) {
+          handleProductSelect({
+            id: product.id,
+            name: product.name,
+            brand: product.brand ?? undefined,
+            barcode: product.barcode ?? undefined,
+          });
+          setShowAddProductForm(false);
+          toast.success("Product found and selected");
+        }
+      })
+      .catch(() => {
+        toast.error("Failed to load product");
+      });
+  };
+
   const onSubmit = (data: ReportFormData) => {
     createReport.mutate({
       productId: data.productId,
@@ -202,6 +253,42 @@ export function ReportForm({ productId }: ReportFormProps) {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Barcode Lookup Section */}
+              <div className="rounded-lg border bg-muted/50 p-4">
+                <label className="mb-2 block text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Lookup Product by Barcode
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    value={barcodeLookup}
+                    onChange={(e) => setBarcodeLookup(e.target.value)}
+                    placeholder="Enter barcode (e.g., 3017624010701)"
+                    disabled={isBarcodeLookingUp || createReport.isPending}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleBarcodeLookup();
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleBarcodeLookup}
+                    disabled={
+                      isBarcodeLookingUp ||
+                      createReport.isPending ||
+                      !barcodeLookup.trim()
+                    }
+                  >
+                    {isBarcodeLookingUp ? "Looking up..." : "Lookup"}
+                  </Button>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Search Open Food Facts database to automatically find or add
+                  product information
+                </p>
+              </div>
+
               {/* Product Search */}
               <FormField
                 control={form.control}
@@ -440,10 +527,14 @@ export function ReportForm({ productId }: ReportFormProps) {
 
       <AddProductModal
         isOpen={showAddProductForm}
-        onClose={() => setShowAddProductForm(false)}
+        onClose={() => {
+          setShowAddProductForm(false);
+          setAddProductInitialData(undefined);
+        }}
         onSubmit={handleAddProduct}
         isLoading={createProduct.isPending}
-        initialName={productSearch}
+        initialData={addProductInitialData ?? { name: productSearch }}
+        onProductFound={handleProductFound}
       />
     </>
   );
@@ -455,13 +546,15 @@ function AddProductModal({
   onClose,
   onSubmit,
   isLoading,
-  initialName,
+  initialData,
+  onProductFound,
 }: {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: z.infer<typeof ProductFormSchema>) => void;
   isLoading: boolean;
-  initialName?: string;
+  initialData?: Partial<z.infer<typeof ProductFormSchema>>;
+  onProductFound?: (productId: string) => void;
 }) {
   if (!isOpen) return null;
 
@@ -469,10 +562,11 @@ function AddProductModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="max-h-[90vh] w-full max-w-2xl overflow-auto">
         <AddProductForm
-          initialData={{ name: initialName }}
+          initialData={initialData}
           onSubmit={onSubmit}
           onCancel={onClose}
           isLoading={isLoading}
+          onProductFound={onProductFound}
         />
       </div>
     </div>

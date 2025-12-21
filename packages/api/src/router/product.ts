@@ -30,10 +30,11 @@ export const productRouter = {
 
   byBarcode: publicProcedure
     .input(z.object({ barcode: z.string() }))
-    .query(({ ctx, input }) => {
-      return ctx.db.query.Product.findFirst({
+    .query(async ({ ctx, input }) => {
+      const product = await ctx.db.query.Product.findFirst({
         where: eq(Product.barcode, input.barcode),
       });
+      return product ?? null;
     }),
 
   byName: publicProcedure

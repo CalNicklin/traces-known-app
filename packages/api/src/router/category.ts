@@ -90,10 +90,6 @@ export const categoryRouter = {
     .mutation(async ({ ctx, input }) => {
       return ctx.db
         .delete(ProductCategory)
-        .where(
-          eq(ProductCategory.productId, input.productId) &&
-            eq(ProductCategory.categoryId, input.categoryId),
-        );
+        .where(eq(ProductCategory.categoryId, input.categoryId));
     }),
 } satisfies TRPCRouterRecord;
-

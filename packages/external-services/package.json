@@ -1,5 +1,5 @@
 {
-  "name": "@acme/api",
+  "name": "@acme/external-services",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
+    },
+    "./open-food-facts": {
+      "types": "./dist/open-food-facts/index.d.ts",
+      "default": "./src/open-food-facts/index.ts"
     }
   },
   "license": "MIT",
@@ -19,12 +23,8 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@acme/auth": "workspace:*",
     "@acme/db": "workspace:*",
-    "@acme/external-services": "workspace:*",
-    "@acme/validators": "workspace:*",
-    "@trpc/server": "catalog:",
-    "superjson": "2.2.2",
+    "@better-fetch/fetch": "latest",
     "zod": "catalog:"
   },
   "devDependencies": {
