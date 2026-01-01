@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   initialFormState,
@@ -143,6 +144,15 @@ function SignInForm() {
           }}
         </form.Field>
       </FieldGroup>
+
+      <div className="text-right">
+        <Link
+          href="/forgot-password"
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
+          Forgot password?
+        </Link>
+      </div>
 
       <form.Subscribe
         selector={(formState) => [formState.canSubmit, formState.isSubmitting]}

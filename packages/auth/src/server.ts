@@ -7,6 +7,8 @@ import { oAuthProxy, username } from "better-auth/plugins";
 
 import { db } from "@acme/db/client";
 
+import { sendPasswordResetEmail } from "./email";
+
 /**
  * Server-only Better Auth initialization.
  *
@@ -43,8 +45,11 @@ export function initAuth(options: {
       enabled: true,
       minPasswordLength: 12,
       maxPasswordLength: 128,
+      sendResetPassword: async ({ user, url }) => {
+        await sendPasswordResetEmail(user.email, url);
+      },
     },
-    trustedOrigins: ["expo://"],
+    trustedOrigins: ["expo://", options.baseUrl],
   } satisfies BetterAuthOptions;
 
   return betterAuth(config);
