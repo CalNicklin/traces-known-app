@@ -30,10 +30,14 @@ export const reportRouter = {
 
   create: protectedProcedure
     .input(CreateReportSchema)
-    .mutation(({ ctx, input }) => {
-      return ctx.db.insert(Report).values({
-        ...input,
-        userId: ctx.session.user.id,
-      });
+    .mutation(async ({ ctx, input }) => {
+      const [report] = await ctx.db
+        .insert(Report)
+        .values({
+          ...input,
+          userId: ctx.session.user.id,
+        })
+        .returning();
+      return report;
     }),
 } satisfies TRPCRouterRecord;

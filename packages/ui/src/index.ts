@@ -30,3 +30,23 @@ export { Label } from "./label";
 export { Skeleton } from "./skeleton";
 export { Text, textVariants } from "./text";
 export type { TextProps, TextVariant, TextElement } from "./text";
+export { AspectRatio } from "./aspect-ratio";
+export {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "./carousel";
+export {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+  DialogTrigger,
+} from "./dialog";

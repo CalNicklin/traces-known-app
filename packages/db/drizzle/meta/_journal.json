@@ -15,6 +15,13 @@
       "when": 1765650178478,
       "tag": "0001_clumsy_bloodaxe",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1767305337731,
+      "tag": "0002_cooing_killmonger",
+      "breakpoints": true
     }
   ]
 }

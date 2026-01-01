@@ -5,6 +5,7 @@ import { openFoodFactsRouter } from "./router/external";
 import { postRouter } from "./router/post";
 import { productRouter } from "./router/product";
 import { reportRouter } from "./router/report";
+import { reportImageRouter } from "./router/report-image";
 import { createTRPCRouter } from "./trpc";
 
 export const appRouter = createTRPCRouter({
@@ -14,6 +15,7 @@ export const appRouter = createTRPCRouter({
   post: postRouter,
   product: productRouter,
   report: reportRouter,
+  reportImage: reportImageRouter,
   external: createTRPCRouter({
     openFoodFacts: openFoodFactsRouter,
   }),

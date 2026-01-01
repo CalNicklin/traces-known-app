@@ -31,6 +31,11 @@ const config = {
         protocol: "https",
         hostname: "static.openfoodfacts.org",
       },
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
     ],
   },
 

@@ -4,6 +4,7 @@ export * from "./product-schema";
 export * from "./posts-schema";
 export * from "./allergen-schema";
 export * from "./report-schema";
+export * from "./report-image-schema";
 export * from "./category-schema";
 export * from "./product-view-schema";
 export * from "./relations";

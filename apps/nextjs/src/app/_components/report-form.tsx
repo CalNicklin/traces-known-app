@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronDownIcon, ChevronUpIcon } from "@radix-ui/react-icons";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  ImageIcon,
+} from "@radix-ui/react-icons";
 import {
   useMutation,
   useQuery,
@@ -30,6 +34,7 @@ import { toast } from "@acme/ui/toast";
 
 import { useTRPC } from "~/trpc/react";
 import { AddProductForm } from "./add-product-form";
+import { ImageUpload } from "./image-upload";
 import { useBarcodeLookup } from "./use-barcode-lookup";
 
 // Form schema for report submission
@@ -72,6 +77,7 @@ export function ReportForm({ productId }: ReportFormProps) {
     Partial<z.infer<typeof ProductFormSchema>> | undefined
   >();
   const [showAllAllergens, setShowAllAllergens] = useState(false);
+  const [createdReportId, setCreatedReportId] = useState<string | null>(null);
 
   // Debounced search function
   const handleSearchChange = useDebouncedCallback((term: string) => {
@@ -183,11 +189,17 @@ export function ReportForm({ productId }: ReportFormProps) {
 
   const createReport = useMutation(
     trpc.report.create.mutationOptions({
-      onSuccess: () => {
-        toast.success("Report submitted successfully!");
-        form.reset();
-        setSelectedProduct(null);
-        setProductSearch("");
+      onSuccess: (result) => {
+        toast.success("Report submitted! You can now add photos.");
+        // Try to extract report ID from result for image uploads
+        if (result && typeof result === "object" && "id" in result) {
+          const reportId = (result as { id: string }).id;
+          setCreatedReportId(reportId);
+        } else {
+          form.reset();
+          setSelectedProduct(null);
+          setProductSearch("");
+        }
         setShowAddProductForm(false);
       },
       onError: (err) => {
@@ -513,10 +525,57 @@ export function ReportForm({ productId }: ReportFormProps) {
                 )}
               />
 
+              {/* Image Upload Section */}
+              {createdReportId ? (
+                <div className="space-y-2">
+                  <span className="text-sm font-medium leading-none">
+                    Add Photos
+                  </span>
+                  <ImageUpload
+                    reportId={createdReportId}
+                    maxImages={5}
+                    onImagesChange={(images) => {
+                      const allComplete = images.every(
+                        (img) => img.status === "complete"
+                      );
+                      if (allComplete && images.length > 0) {
+                        // All images uploaded, invalidate queries
+                        void queryClient.invalidateQueries({
+                          queryKey: ["reportImage"],
+                        });
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mt-4 w-full"
+                    onClick={() => {
+                      setCreatedReportId(null);
+                      form.reset();
+                      setSelectedProduct(null);
+                      setProductSearch("");
+                      toast.success("Report complete!");
+                    }}
+                  >
+                    Done Adding Images
+                  </Button>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed p-4">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <ImageIcon className="h-5 w-5" />
+                    <Text variant="muted">
+                      You can add photos after submitting your report
+                    </Text>
+                  </div>
+                </div>
+              )}
+
               <Button
                 type="submit"
                 className="w-full"
-                disabled={createReport.isPending}
+                disabled={createReport.isPending || Boolean(createdReportId)}
               >
                 {createReport.isPending ? "Submitting..." : "Submit Report"}
               </Button>

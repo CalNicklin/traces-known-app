@@ -8,6 +8,7 @@ import * as postSchema from "./schema/posts-schema";
 import * as productSchema from "./schema/product-schema";
 import * as productViewSchema from "./schema/product-view-schema";
 import * as relations from "./schema/relations";
+import * as reportImageSchema from "./schema/report-image-schema";
 import * as reportSchema from "./schema/report-schema";
 
 if (!process.env.POSTGRES_URL) {
@@ -29,6 +30,7 @@ export const db = drizzle(client, {
     ...postSchema,
     ...productSchema,
     ...reportSchema,
+    ...reportImageSchema,
     ...allergenSchema,
     ...categorySchema,
     ...productViewSchema,

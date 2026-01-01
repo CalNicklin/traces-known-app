@@ -5,6 +5,7 @@ import { user } from "./auth-schema";
 import { Category, ProductCategory } from "./category-schema";
 import { Product } from "./product-schema";
 import { ProductView } from "./product-view-schema";
+import { ImageReport, ReportImage } from "./report-image-schema";
 import { Report, ReportAllergen } from "./report-schema";
 
 // =============================================================================
@@ -78,6 +79,7 @@ export const ReportRelations = relations(Report, ({ one, many }) => ({
     references: [user.id],
   }),
   reportAllergens: many(ReportAllergen),
+  images: many(ReportImage),
 }));
 
 // ReportAllergen relations (junction table)
@@ -111,9 +113,44 @@ export const UserAllergenRelations = relations(UserAllergen, ({ one }) => ({
   }),
 }));
 
+// ReportImage relations
+export const ReportImageRelations = relations(ReportImage, ({ one, many }) => ({
+  report: one(Report, {
+    fields: [ReportImage.reportId],
+    references: [Report.id],
+  }),
+  uploader: one(user, {
+    fields: [ReportImage.uploadedBy],
+    references: [user.id],
+    relationName: "uploadedImages",
+  }),
+  imageReports: many(ImageReport),
+}));
+
+// ImageReport relations (user reports of inappropriate images)
+export const ImageReportRelations = relations(ImageReport, ({ one }) => ({
+  image: one(ReportImage, {
+    fields: [ImageReport.imageId],
+    references: [ReportImage.id],
+  }),
+  reporter: one(user, {
+    fields: [ImageReport.reportedBy],
+    references: [user.id],
+    relationName: "reportedImages",
+  }),
+  resolver: one(user, {
+    fields: [ImageReport.resolvedBy],
+    references: [user.id],
+    relationName: "resolvedImageReports",
+  }),
+}));
+
 // User relations
 export const UserRelations = relations(user, ({ many }) => ({
   userAllergens: many(UserAllergen),
   reports: many(Report),
   productViews: many(ProductView),
+  uploadedImages: many(ReportImage, { relationName: "uploadedImages" }),
+  reportedImages: many(ImageReport, { relationName: "reportedImages" }),
+  resolvedImageReports: many(ImageReport, { relationName: "resolvedImageReports" }),
 }));

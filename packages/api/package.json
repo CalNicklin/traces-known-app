@@ -23,7 +23,9 @@
     "@acme/db": "workspace:*",
     "@acme/external-services": "workspace:*",
     "@acme/validators": "workspace:*",
+    "@supabase/supabase-js": "^2.89.0",
     "@trpc/server": "catalog:",
+    "sharp": "^0.34.5",
     "superjson": "2.2.2",
     "zod": "catalog:"
   },

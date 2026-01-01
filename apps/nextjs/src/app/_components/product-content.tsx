@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-import Image from "next/image";
+import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
@@ -20,6 +19,7 @@ import { Button } from "@acme/ui/button";
 
 import { getUserInitials } from "~/lib/user";
 import { useTRPC } from "~/trpc/react";
+import { ProductGallery, ProductGallerySkeleton } from "./product-gallery";
 
 interface ProductContentProps {
   id: string;
@@ -67,20 +67,13 @@ export function ProductContent({ id }: ProductContentProps) {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Card>
           <CardContent className="p-6">
-            <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
-              {product.imageUrl ? (
-                <Image
-                  src={product.imageUrl}
-                  alt={product.name}
-                  fill
-                  className="object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center">
-                  <Text variant="muted">No image available</Text>
-                </div>
-              )}
-            </div>
+            <Suspense fallback={<ProductGallerySkeleton />}>
+              <ProductGallery
+                productId={id}
+                mainImageUrl={product.imageUrl}
+                productName={product.name}
+              />
+            </Suspense>
           </CardContent>
         </Card>
 
