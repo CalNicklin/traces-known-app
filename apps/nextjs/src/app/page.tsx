@@ -81,9 +81,9 @@ export default async function HomePage() {
             <Card className="transition-all hover:scale-[1.02] hover:shadow-md">
               <CardContent className="flex flex-col gap-4 p-6">
                 <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-destructive/10 p-2">
+                  <div className="rounded-lg bg-secondary p-2">
                     <svg
-                      className="h-6 w-6 text-destructive"
+                      className="h-6 w-6 text-foreground"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -92,20 +92,20 @@ export default async function HomePage() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                       />
                     </svg>
                   </div>
                   <Text
                     variant="h4"
-                    className="transition-colors group-hover:text-destructive"
+                    className="transition-colors group-hover:text-primary"
                   >
                     Report →
                   </Text>
                 </div>
                 <Text variant="muted" className="leading-relaxed">
-                  Report your allergy symptoms after eating a product so others
-                  can review before they eat.
+                  Share your experience after trying a product to help others
+                  with similar allergies.
                 </Text>
               </CardContent>
             </Card>

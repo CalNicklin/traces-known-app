@@ -46,9 +46,9 @@ export function SearchResultCard({ product }: SearchResultCardProps) {
               {product.inDb && (
                 <Badge
                   variant="secondary"
-                  className="bg-green-100 text-green-800"
+                  className="bg-safe/10 text-safe"
                 >
-                  <span className="mr-1 h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                  <span className="mr-1 h-1.5 w-1.5 rounded-full bg-safe"></span>
                   In Database
                 </Badge>
               )}

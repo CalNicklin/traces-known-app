@@ -145,12 +145,36 @@ export function ReportThread({
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0">
           {report.allergenIds && report.allergenIds.length > 0 ? (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-red-600">
-              ⚠️
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-danger/10 text-danger">
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
             </div>
           ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-600">
-              ✓
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-safe/10 text-safe">
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
             </div>
           )}
         </div>
@@ -239,8 +263,8 @@ export function ReportThread({
               )}
 
               {report.allergenIds && report.allergenIds.length > 0 && (
-                <Text variant="caption" className="text-red-600">
-                  ⚠️ Reported allergen reaction
+                <Text variant="caption" className="text-danger">
+                  Reported allergen reaction
                 </Text>
               )}
             </>
