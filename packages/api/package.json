@@ -24,6 +24,7 @@
     "@acme/external-services": "workspace:*",
     "@acme/validators": "workspace:*",
     "@supabase/supabase-js": "^2.89.0",
+    "@t3-oss/env-core": "^0.13.10",
     "@trpc/server": "catalog:",
     "sharp": "^0.34.5",
     "superjson": "2.2.2",

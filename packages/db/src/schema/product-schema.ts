@@ -34,11 +34,14 @@ export const CreateProductSchema = createInsertSchema(Product, {
 export const SelectProductSchema = createSelectSchema(Product);
 
 // Form schema for user input (more lenient validation)
+// Note: riskLevel is omitted - it will be determined by AI later
 export const ProductFormSchema = createInsertSchema(Product, {
   name: z.string().min(1, "Product name is required").max(255),
   barcode: z.string().max(50).optional().or(z.literal("")),
-  allergenWarning: z.string().optional().or(z.literal("")),
-  riskLevel: z.enum(["LOW", "MEDIUM", "HIGH"]).optional(),
+  allergenWarning: z
+    .string()
+    .min(1, "Allergen warning is required")
+    .max(2000, "Allergen warning is too long"),
   ingredients: z.array(z.string()).optional(),
   imageUrl: z
     .string()
@@ -46,12 +49,20 @@ export const ProductFormSchema = createInsertSchema(Product, {
     .optional()
     .or(z.literal("")),
   brand: z.string().max(255).optional().or(z.literal("")),
-}).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  deletedAt: true,
-});
+})
+  .omit({
+    id: true,
+    riskLevel: true, // AI will determine this
+    createdAt: true,
+    updatedAt: true,
+    deletedAt: true,
+  })
+  .extend({
+    // Category IDs for multi-select (required, at least one)
+    categoryIds: z
+      .array(z.string().uuid())
+      .min(1, "Please select at least one category"),
+  });
 
 // Search result type
 export interface SearchResultProduct {

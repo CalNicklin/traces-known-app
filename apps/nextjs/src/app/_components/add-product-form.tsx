@@ -1,11 +1,14 @@
 "use client";
 
 import type { z } from "zod/v4";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CheckIcon } from "@radix-ui/react-icons";
+import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 
 import { ProductFormSchema } from "@acme/db/schema";
-import { Card, CardContent, CardHeader, CardTitle } from "@acme/ui";
+import { Card, CardContent, CardHeader, CardTitle, cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 import {
   Form,
@@ -18,13 +21,20 @@ import {
 } from "@acme/ui/form";
 import { Input } from "@acme/ui/input";
 
+import { useTRPC } from "~/trpc/react";
+import { ImageUpload } from "./image-upload";
 import { useBarcodeLookup } from "./use-barcode-lookup";
 
 type ProductFormData = z.infer<typeof ProductFormSchema>;
 
+export interface AddProductFormResult {
+  data: ProductFormData;
+  imageFile: File | null;
+}
+
 interface AddProductFormProps {
   initialData?: Partial<ProductFormData>;
-  onSubmit: (data: ProductFormData) => void;
+  onSubmit: (result: AddProductFormResult) => void;
   onCancel: () => void;
   isLoading?: boolean;
   onProductFound?: (productId: string) => void;
@@ -37,6 +47,14 @@ export function AddProductForm({
   isLoading = false,
   onProductFound,
 }: AddProductFormProps) {
+  const trpc = useTRPC();
+  const [stagedImageFile, setStagedImageFile] = useState<File | null>(null);
+
+  // Fetch categories for selection
+  const { data: categories = [] } = useQuery(
+    trpc.category.all.queryOptions(),
+  );
+
   const form = useForm<ProductFormData>({
     resolver: zodResolver(ProductFormSchema),
     defaultValues: {
@@ -44,9 +62,9 @@ export function AddProductForm({
       brand: initialData?.brand ?? "",
       barcode: initialData?.barcode ?? "",
       allergenWarning: initialData?.allergenWarning ?? "",
-      riskLevel: initialData?.riskLevel ?? undefined,
       imageUrl: initialData?.imageUrl ?? "",
       ingredients: initialData?.ingredients ?? [],
+      categoryIds: initialData?.categoryIds ?? [],
       ...initialData,
     },
   });
@@ -61,15 +79,21 @@ export function AddProductForm({
         form.reset({
           ...currentValues,
           ...mappedData,
+          // Keep the categoryIds from the form, not from API
+          categoryIds: currentValues.categoryIds,
         } as ProductFormData);
       },
     });
+
+  const handleFilesSelect = (files: File[]) => {
+    // For products, we only use the first file
+    setStagedImageFile(files[0] ?? null);
+  };
 
   const handleSubmit = (data: ProductFormData) => {
     // Clean up empty string values
     const barcode = data.barcode?.trim() ?? "";
     const brand = data.brand?.trim() ?? "";
-    const allergenWarning = data.allergenWarning?.trim() ?? "";
     const imageUrl = data.imageUrl?.trim() ?? "";
     const ingredients = (data.ingredients ?? [])
       .map((ingredient) => ingredient.trim())
@@ -79,12 +103,32 @@ export function AddProductForm({
       ...data,
       barcode: barcode === "" ? undefined : barcode,
       brand: brand === "" ? undefined : brand,
-      allergenWarning: allergenWarning === "" ? undefined : allergenWarning,
       imageUrl: imageUrl === "" ? undefined : imageUrl,
       ingredients: ingredients.length > 0 ? ingredients : undefined,
     };
-    onSubmit(cleanedData);
+    
+    onSubmit({
+      data: cleanedData,
+      imageFile: stagedImageFile,
+    });
   };
+
+  const toggleCategory = (categoryId: string) => {
+    const currentIds = form.getValues("categoryIds") ?? [];
+    if (currentIds.includes(categoryId)) {
+      form.setValue(
+        "categoryIds",
+        currentIds.filter((id) => id !== categoryId),
+        { shouldValidate: true },
+      );
+    } else {
+      form.setValue("categoryIds", [...currentIds, categoryId], {
+        shouldValidate: true,
+      });
+    }
+  };
+
+  const selectedCategoryIds = form.watch("categoryIds") ?? [];
 
   return (
     <Card>
@@ -173,26 +217,39 @@ export function AddProductForm({
               />
             </div>
 
+            {/* Category Selection */}
             <FormField
               control={form.control}
-              name="riskLevel"
-              render={({ field }) => (
+              name="categoryIds"
+              render={() => (
                 <FormItem>
-                  <FormLabel>Allergy Risk Level</FormLabel>
-                  <FormControl>
-                    <select
-                      {...field}
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    >
-                      <option value="">Select risk level...</option>
-                      <option value="LOW">Low Risk</option>
-                      <option value="MEDIUM">Medium Risk</option>
-                      <option value="HIGH">High Risk</option>
-                    </select>
-                  </FormControl>
+                  <FormLabel>Categories *</FormLabel>
                   <FormDescription>
-                    Based on allergen content and cross-contamination risk
+                    Select all categories that apply to this product
                   </FormDescription>
+                  <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {categories.map((category) => {
+                      const isSelected = selectedCategoryIds.includes(
+                        category.id,
+                      );
+                      return (
+                        <button
+                          key={category.id}
+                          type="button"
+                          onClick={() => toggleCategory(category.id)}
+                          className={cn(
+                            "flex items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors",
+                            isSelected
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-input hover:bg-accent hover:text-accent-foreground",
+                          )}
+                        >
+                          <span>{category.name}</span>
+                          {isSelected && <CheckIcon className="h-4 w-4" />}
+                        </button>
+                      );
+                    })}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -203,7 +260,7 @@ export function AddProductForm({
               name="allergenWarning"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Package Allergen Warning</FormLabel>
+                  <FormLabel>Package Allergen Warning *</FormLabel>
                   <FormControl>
                     <textarea
                       {...field}
@@ -212,9 +269,9 @@ export function AddProductForm({
                     />
                   </FormControl>
                   <FormDescription>
-                    Copy the allergen statement from the product packaging. For
-                    personal allergy experiences, submit a report after adding
-                    the product.
+                    Copy the allergen statement from the product packaging
+                    exactly as it appears. This is required to help users with
+                    allergies.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -254,26 +311,21 @@ export function AddProductForm({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="imageUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Product Image URL</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="url"
-                      placeholder="https://example.com/image.jpg"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Optional: Link to a product image
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Product Image Upload */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Product Image
+              </label>
+              <ImageUpload
+                entityType="product"
+                maxImages={1}
+                onFilesSelect={handleFilesSelect}
+                disabled={isLoading}
+              />
+              <p className="text-[0.8rem] text-muted-foreground">
+                Optional: Upload a photo of the product packaging
+              </p>
+            </div>
 
             <div className="flex gap-2 pt-4">
               <Button type="submit" disabled={isLoading}>

@@ -4,8 +4,9 @@ import { z } from "zod/v4";
 import type { SearchResultProduct } from "@acme/db/schema";
 import { desc, eq, ilike, or, sql } from "@acme/db";
 import {
-  CreateProductSchema,
   Product,
+  ProductCategory,
+  ProductFormSchema,
   ProductView,
   Report,
 } from "@acme/db/schema";
@@ -86,16 +87,46 @@ export const productRouter = {
     }),
 
   create: protectedProcedure
-    .input(CreateProductSchema)
-    .mutation(({ ctx, input }) => {
-      return ctx.db.insert(Product).values(input);
+    .input(ProductFormSchema)
+    .mutation(async ({ ctx, input }) => {
+      // Extract categoryIds from input
+      const { categoryIds, ...productData } = input;
+
+      // Insert product first
+      const [product] = await ctx.db
+        .insert(Product)
+        .values(productData)
+        .returning();
+
+      if (!product) {
+        throw new Error("Failed to create product");
+      }
+
+      // Insert category associations
+      if (categoryIds.length > 0) {
+        await ctx.db.insert(ProductCategory).values(
+          categoryIds.map((categoryId) => ({
+            productId: product.id,
+            categoryId,
+          })),
+        );
+      }
+
+      return product;
     }),
 
   update: protectedProcedure
     .input(
       z.object({
         id: z.string().uuid(),
-        data: CreateProductSchema.partial(),
+        data: z.object({
+          name: z.string().min(1).max(255).optional(),
+          barcode: z.string().max(50).optional(),
+          allergenWarning: z.string().max(2000).optional(),
+          ingredients: z.array(z.string()).optional(),
+          imageUrl: z.string().url().max(500).optional().nullable(),
+          brand: z.string().max(255).optional(),
+        }),
       }),
     )
     .mutation(({ ctx, input }) => {

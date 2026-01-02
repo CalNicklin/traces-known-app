@@ -7,4 +7,7 @@ export * from "./report-schema";
 export * from "./report-image-schema";
 export * from "./category-schema";
 export * from "./product-view-schema";
+export * from "./comment-schema";
+export * from "./notification-schema";
+export * from "./product-image-schema";
 export * from "./relations";

@@ -1,31 +1,27 @@
 import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
 
-const BUCKET_NAME = "user-product-images";
-const TEMP_FOLDER = "temp";
-const IMAGES_FOLDER = "images";
+import { env } from "../env";
 
-// Lazy initialization to avoid environment variable issues at import time
+const BUCKET_NAME = "user-uploads";
+const TEMP_FOLDER = "temp";
+
+// Folder mapping for different entity types
+const ENTITY_FOLDERS: Record<string, string> = {
+  report: "reports",
+  product: "products",
+};
+
+// Lazy initialization for Supabase client
 let _supabase: ReturnType<typeof createClient> | null = null;
 
 function getSupabaseAdmin() {
-  if (!_supabase) {
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error(
-        "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables",
-      );
-    }
-
-    _supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
-  }
+  _supabase ??= createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
   return _supabase;
 }
 
@@ -56,16 +52,21 @@ export async function createUploadUrl(filename: string) {
 }
 
 /**
- * Process an uploaded image:
+ * Unified image processing function:
  * 1. Download from temp location
  * 2. Optimize with Sharp
- * 3. Upload to final location
+ * 3. Upload to final location based on entity type
  * 4. Delete temp file
  * 5. Return public URL
+ *
+ * @param tempPath - Path to the temporary uploaded file
+ * @param entityType - Type of entity ("product" | "report")
+ * @param entityId - ID of the entity (productId or reportId)
  */
-export async function processUploadedImage(
+export async function processImage(
   tempPath: string,
-  reportId: string,
+  entityType: "product" | "report",
+  entityId: string,
 ): Promise<{
   url: string;
   storagePath: string;
@@ -74,15 +75,18 @@ export async function processUploadedImage(
   sizeBytes: number;
 }> {
   const supabase = getSupabaseAdmin();
+  const folder = ENTITY_FOLDERS[entityType] ?? "images";
 
   // 1. Download temp file
-  const { data: tempFile, error: downloadError } = await supabase.storage
+  const downloadResult = await supabase.storage
     .from(BUCKET_NAME)
     .download(tempPath);
 
-  if (downloadError || !tempFile) {
-    throw new Error(`Failed to download temp file: ${downloadError?.message}`);
+  if (downloadResult.error) {
+    throw new Error(`Failed to download temp file: ${downloadResult.error.message}`);
   }
+
+  const tempFile = downloadResult.data;
 
   // 2. Optimize with Sharp
   const buffer = Buffer.from(await tempFile.arrayBuffer());
@@ -96,14 +100,14 @@ export async function processUploadedImage(
 
   // Get metadata for the optimized image
   const metadata = await sharp(optimized).metadata();
-  const width = metadata.width ?? 0;
-  const height = metadata.height ?? 0;
+  const width = metadata.width;
+  const height = metadata.height;
   const sizeBytes = optimized.length;
 
   // 3. Upload to final location
   const timestamp = Date.now();
   const randomId = Math.random().toString(36).slice(2, 11);
-  const finalPath = `${IMAGES_FOLDER}/${reportId}/${timestamp}-${randomId}.webp`;
+  const finalPath = `${folder}/${entityId}/${timestamp}-${randomId}.webp`;
 
   const { error: uploadError } = await supabase.storage
     .from(BUCKET_NAME)

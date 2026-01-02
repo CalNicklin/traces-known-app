@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { PersonIcon } from "@radix-ui/react-icons";
 
 import { Text } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 
 import { getSession } from "~/auth/server";
 import { signOutAction } from "../_actions/sign-out";
+import { NotificationDropdown } from "./notification-dropdown";
 
 export async function Navigation() {
   const session = await getSession();
@@ -46,7 +48,15 @@ export async function Navigation() {
           </div>
         </div>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2">
+          <NotificationDropdown />
+
+          <Button variant="ghost" size="sm" asChild className="h-9 w-9 p-0">
+            <Link href="/profile">
+              <PersonIcon className="h-5 w-5" />
+            </Link>
+          </Button>
+
           <div className="hidden items-center space-x-2 sm:flex">
             <Text variant="muted">Welcome,</Text>
             <Text variant="small" className="text-foreground">

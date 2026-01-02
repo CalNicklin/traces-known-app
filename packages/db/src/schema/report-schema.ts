@@ -20,6 +20,8 @@ export const Report = appSchema.table("report", (t) => ({
   comment: t.text(),
   reportDate: t.timestamp().defaultNow().notNull(),
   createdAt: t.timestamp().defaultNow().notNull(),
+  updatedAt: t.timestamp(),
+  deletedAt: t.timestamp(),
 }));
 
 export const ReportAllergen = appSchema.table("report_allergen", (t) => ({
@@ -46,7 +48,17 @@ export const CreateReportSchema = createInsertSchema(Report, {
   userId: true,
   reportDate: true,
   createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+
+export const UpdateReportSchema = z.object({
+  id: z.string().uuid(),
+  comment: z.string().max(2000).optional(),
 });
 
 export const SelectReportSchema = createSelectSchema(Report);
 export const SelectReportAllergenSchema = createSelectSchema(ReportAllergen);
+
+export type Report = typeof Report.$inferSelect;
+export type ReportInsert = typeof Report.$inferInsert;

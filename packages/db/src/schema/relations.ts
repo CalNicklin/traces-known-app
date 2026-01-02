@@ -3,6 +3,9 @@ import { relations } from "drizzle-orm";
 import { Allergen, ProductAllergen, UserAllergen } from "./allergen-schema";
 import { user } from "./auth-schema";
 import { Category, ProductCategory } from "./category-schema";
+import { ReportComment } from "./comment-schema";
+import { Notification } from "./notification-schema";
+import { ProductImage } from "./product-image-schema";
 import { Product } from "./product-schema";
 import { ProductView } from "./product-view-schema";
 import { ImageReport, ReportImage } from "./report-image-schema";
@@ -19,6 +22,7 @@ export const ProductRelations = relations(Product, ({ many }) => ({
   productCategories: many(ProductCategory),
   productViews: many(ProductView),
   reports: many(Report),
+  images: many(ProductImage),
 }));
 
 // ProductAllergen relations (junction table)
@@ -80,6 +84,8 @@ export const ReportRelations = relations(Report, ({ one, many }) => ({
   }),
   reportAllergens: many(ReportAllergen),
   images: many(ReportImage),
+  comments: many(ReportComment),
+  notifications: many(Notification),
 }));
 
 // ReportAllergen relations (junction table)
@@ -145,12 +151,81 @@ export const ImageReportRelations = relations(ImageReport, ({ one }) => ({
   }),
 }));
 
+// ReportComment relations
+export const ReportCommentRelations = relations(
+  ReportComment,
+  ({ one, many }) => ({
+    report: one(Report, {
+      fields: [ReportComment.reportId],
+      references: [Report.id],
+    }),
+    user: one(user, {
+      fields: [ReportComment.userId],
+      references: [user.id],
+    }),
+    parentComment: one(ReportComment, {
+      fields: [ReportComment.parentCommentId],
+      references: [ReportComment.id],
+      relationName: "replies",
+    }),
+    replies: many(ReportComment, { relationName: "replies" }),
+    notifications: many(Notification),
+  }),
+);
+
+// Notification relations
+export const NotificationRelations = relations(Notification, ({ one }) => ({
+  recipient: one(user, {
+    fields: [Notification.userId],
+    references: [user.id],
+    relationName: "receivedNotifications",
+  }),
+  actor: one(user, {
+    fields: [Notification.actorId],
+    references: [user.id],
+    relationName: "triggeredNotifications",
+  }),
+  report: one(Report, {
+    fields: [Notification.reportId],
+    references: [Report.id],
+  }),
+  comment: one(ReportComment, {
+    fields: [Notification.commentId],
+    references: [ReportComment.id],
+  }),
+}));
+
+// ProductImage relations
+export const ProductImageRelations = relations(ProductImage, ({ one }) => ({
+  product: one(Product, {
+    fields: [ProductImage.productId],
+    references: [Product.id],
+  }),
+  uploader: one(user, {
+    fields: [ProductImage.uploadedBy],
+    references: [user.id],
+    relationName: "uploadedProductImages",
+  }),
+}));
+
 // User relations
 export const UserRelations = relations(user, ({ many }) => ({
   userAllergens: many(UserAllergen),
   reports: many(Report),
   productViews: many(ProductView),
   uploadedImages: many(ReportImage, { relationName: "uploadedImages" }),
+  uploadedProductImages: many(ProductImage, {
+    relationName: "uploadedProductImages",
+  }),
   reportedImages: many(ImageReport, { relationName: "reportedImages" }),
-  resolvedImageReports: many(ImageReport, { relationName: "resolvedImageReports" }),
+  resolvedImageReports: many(ImageReport, {
+    relationName: "resolvedImageReports",
+  }),
+  comments: many(ReportComment),
+  receivedNotifications: many(Notification, {
+    relationName: "receivedNotifications",
+  }),
+  triggeredNotifications: many(Notification, {
+    relationName: "triggeredNotifications",
+  }),
 }));

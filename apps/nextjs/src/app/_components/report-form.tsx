@@ -17,7 +17,6 @@ import { useForm } from "react-hook-form";
 import { useDebouncedCallback } from "use-debounce";
 import { z } from "zod/v4";
 
-import type { ProductFormSchema } from "@acme/db/schema";
 import { Card, CardContent, CardHeader, CardTitle, Text } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 import {
@@ -33,6 +32,7 @@ import { Input } from "@acme/ui/input";
 import { toast } from "@acme/ui/toast";
 
 import { useTRPC } from "~/trpc/react";
+import type { AddProductFormResult } from "./add-product-form";
 import { AddProductForm } from "./add-product-form";
 import { ImageUpload } from "./image-upload";
 import { useBarcodeLookup } from "./use-barcode-lookup";
@@ -74,10 +74,12 @@ export function ReportForm({ productId }: ReportFormProps) {
   const [showProductResults, setShowProductResults] = useState(false);
   const [showAddProductForm, setShowAddProductForm] = useState(false);
   const [addProductInitialData, setAddProductInitialData] = useState<
-    Partial<z.infer<typeof ProductFormSchema>> | undefined
+    Partial<AddProductFormResult["data"]> | undefined
   >();
   const [showAllAllergens, setShowAllAllergens] = useState(false);
   const [createdReportId, setCreatedReportId] = useState<string | null>(null);
+  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
+  const [isUploadingProductImage, setIsUploadingProductImage] = useState(false);
 
   // Debounced search function
   const handleSearchChange = useDebouncedCallback((term: string) => {
@@ -153,39 +155,52 @@ export function ReportForm({ productId }: ReportFormProps) {
     },
   });
 
-  const createProduct = useMutation(
-    trpc.product.create.mutationOptions({
-      onSuccess: (result: unknown) => {
-        toast.success("Product added successfully!");
-        // Type-safe handling of the mutation result
-        if (
-          result &&
-          typeof result === "object" &&
-          "id" in result &&
-          "name" in result
-        ) {
-          const newProduct = result as {
-            id: string;
-            name: string;
-            brand?: string | null;
-            barcode?: string | null;
-          };
-          handleProductSelect({
-            id: newProduct.id,
-            name: newProduct.name,
-            brand: newProduct.brand ?? undefined,
-            barcode: newProduct.barcode ?? undefined,
-          });
-        }
-        setShowAddProductForm(false);
-      },
-      onError: (err) => {
-        toast.error(
-          "Failed to add product: " + (err.message || "Unknown error"),
-        );
-      },
-    }),
+  const createProduct = useMutation(trpc.product.create.mutationOptions());
+
+  const requestImageUpload = useMutation(
+    trpc.image.requestUploadUrl.mutationOptions(),
   );
+
+  const confirmImageUpload = useMutation(
+    trpc.image.confirmUpload.mutationOptions(),
+  );
+
+  // Upload product image after product creation
+  const uploadProductImage = async (productId: string, file: File) => {
+    try {
+      setIsUploadingProductImage(true);
+
+      // 1. Get presigned URL
+      const { uploadUrl, tempPath } = await requestImageUpload.mutateAsync({
+        filename: file.name,
+      });
+
+      // 2. Upload to Supabase Storage
+      const uploadResponse = await fetch(uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Failed to upload image");
+      }
+
+      // 3. Confirm and process
+      await confirmImageUpload.mutateAsync({
+        tempPath,
+        entityType: "product",
+        entityId: productId,
+      });
+
+      toast.success("Product image uploaded!");
+    } catch {
+      toast.error("Failed to upload product image");
+    } finally {
+      setIsUploadingProductImage(false);
+      setPendingImageFile(null);
+    }
+  };
 
   const createReport = useMutation(
     trpc.report.create.mutationOptions({
@@ -252,8 +267,39 @@ export function ReportForm({ productId }: ReportFormProps) {
     });
   };
 
-  const handleAddProduct = (productData: z.infer<typeof ProductFormSchema>) => {
-    createProduct.mutate(productData);
+  const handleAddProduct = async (result: AddProductFormResult) => {
+    try {
+      // Store the image file for later upload
+      setPendingImageFile(result.imageFile);
+
+      // Create the product
+      const newProduct = await createProduct.mutateAsync(result.data);
+
+      if (newProduct) {
+        toast.success("Product added successfully!");
+
+        // Select the new product
+        handleProductSelect({
+          id: newProduct.id,
+          name: newProduct.name,
+          brand: newProduct.brand ?? undefined,
+          barcode: newProduct.barcode ?? undefined,
+        });
+
+        // Upload image if provided
+        if (result.imageFile) {
+          await uploadProductImage(newProduct.id, result.imageFile);
+        }
+
+        setShowAddProductForm(false);
+        setAddProductInitialData(undefined);
+      }
+    } catch (err) {
+      toast.error(
+        "Failed to add product: " +
+          ((err as Error).message || "Unknown error"),
+      );
+    }
   };
 
   return (
@@ -532,16 +578,17 @@ export function ReportForm({ productId }: ReportFormProps) {
                     Add Photos
                   </span>
                   <ImageUpload
-                    reportId={createdReportId}
+                    entityType="report"
+                    entityId={createdReportId}
                     maxImages={5}
                     onImagesChange={(images) => {
                       const allComplete = images.every(
-                        (img) => img.status === "complete"
+                        (img) => img.status === "complete",
                       );
                       if (allComplete && images.length > 0) {
                         // All images uploaded, invalidate queries
                         void queryClient.invalidateQueries({
-                          queryKey: ["reportImage"],
+                          queryKey: ["image"],
                         });
                       }
                     }}
@@ -591,8 +638,8 @@ export function ReportForm({ productId }: ReportFormProps) {
           setAddProductInitialData(undefined);
         }}
         onSubmit={handleAddProduct}
-        isLoading={createProduct.isPending}
-        initialData={addProductInitialData ?? { name: productSearch }}
+        isLoading={createProduct.isPending || isUploadingProductImage}
+        initialData={addProductInitialData ?? { name: productSearch, categoryIds: [] }}
         onProductFound={handleProductFound}
       />
     </>
@@ -610,9 +657,9 @@ function AddProductModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: z.infer<typeof ProductFormSchema>) => void;
+  onSubmit: (result: AddProductFormResult) => void;
   isLoading: boolean;
-  initialData?: Partial<z.infer<typeof ProductFormSchema>>;
+  initialData?: Partial<AddProductFormResult["data"]>;
   onProductFound?: (productId: string) => void;
 }) {
   if (!isOpen) return null;

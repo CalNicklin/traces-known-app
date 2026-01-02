@@ -3,12 +3,13 @@
 import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
   Card,
   CardContent,
   CardHeader,
@@ -17,9 +18,9 @@ import {
 } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 
-import { getUserInitials } from "~/lib/user";
 import { useTRPC } from "~/trpc/react";
 import { ProductGallery, ProductGallerySkeleton } from "./product-gallery";
+import { ReportThread } from "./report-thread";
 
 interface ProductContentProps {
   id: string;
@@ -27,6 +28,7 @@ interface ProductContentProps {
 
 export function ProductContent({ id }: ProductContentProps) {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
 
   // Record view when component mounts
   const { mutate: recordView } = useMutation(
@@ -45,6 +47,12 @@ export function ProductContent({ id }: ProductContentProps) {
   const { data: reports } = useSuspenseQuery(
     trpc.report.byProductId.queryOptions({ productId: id }),
   );
+
+  const handleReportChange = () => {
+    void queryClient.invalidateQueries({
+      queryKey: ["report", "byProductId", { productId: id }],
+    });
+  };
 
   if (!product) {
     notFound();
@@ -138,53 +146,12 @@ export function ProductContent({ id }: ProductContentProps) {
               {reports.length > 0 ? (
                 <div className="space-y-4">
                   {reports.map((report) => (
-                    <div
+                    <ReportThread
                       key={report.id}
-                      className="flex items-start gap-3 rounded-lg border p-3"
-                    >
-                      <div className="flex-shrink-0">
-                        {report.allergenIds && report.allergenIds.length > 0 ? (
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-red-600">
-                            ⚠️
-                          </div>
-                        ) : (
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-600">
-                            ✓
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex-1 space-y-1">
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage
-                                src={report.user.image ?? undefined}
-                                alt={report.user.name}
-                              />
-                              <AvatarFallback className="text-xs">
-                                {getUserInitials(report.user)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <Text variant="small">{report.user.name}</Text>
-                          </div>
-                          <Text variant="caption">
-                            {new Date(report.reportDate).toLocaleDateString()}
-                          </Text>
-                        </div>
-
-                        {report.comment && (
-                          <Text variant="muted">{report.comment}</Text>
-                        )}
-
-                        {report.allergenIds &&
-                          report.allergenIds.length > 0 && (
-                            <Text variant="caption" className="text-red-600">
-                              ⚠️ Reported allergen reaction
-                            </Text>
-                          )}
-                      </div>
-                    </div>
+                      report={report}
+                      onReportDeleted={handleReportChange}
+                      onReportUpdated={handleReportChange}
+                    />
                   ))}
                 </div>
               ) : (

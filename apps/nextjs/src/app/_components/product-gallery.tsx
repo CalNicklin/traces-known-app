@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { ChevronLeftIcon, ChevronRightIcon } from "@radix-ui/react-icons";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
+import type { RouterOutputs } from "@acme/api";
 import {
   AspectRatio,
   Button,
@@ -19,6 +20,8 @@ import {
 } from "@acme/ui";
 
 import { useTRPC } from "~/trpc/react";
+
+type ReportImage = RouterOutputs["image"]["reportImagesByProductId"][number];
 
 interface ProductGalleryProps {
   productId: string;
@@ -38,7 +41,7 @@ export function ProductGallery({
 
   const trpc = useTRPC();
   const { data: reportImages } = useSuspenseQuery(
-    trpc.reportImage.byProductId.queryOptions({ productId })
+    trpc.image.reportImagesByProductId.queryOptions({ productId }),
   );
 
   // Combine main image with report images
@@ -46,7 +49,7 @@ export function ProductGallery({
     ...(mainImageUrl
       ? [{ id: "main", url: mainImageUrl, isMain: true }]
       : []),
-    ...reportImages.map((img) => ({
+    ...(reportImages as ReportImage[]).map((img) => ({
       id: img.id,
       url: img.url,
       isMain: false,

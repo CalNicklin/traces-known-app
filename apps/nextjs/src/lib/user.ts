@@ -19,3 +19,16 @@ export function getUserInitials(user: Pick<User, "name">): string {
   }
   return user.name.substring(0, 2).toUpperCase();
 }
+
+/**
+ * Format a date consistently to avoid hydration mismatches.
+ * Uses a fixed locale (en-US) to ensure server and client produce the same output.
+ */
+export function formatDate(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return d.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}

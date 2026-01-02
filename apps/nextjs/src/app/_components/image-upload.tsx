@@ -4,11 +4,11 @@ import type { ChangeEvent, DragEvent } from "react";
 import { useCallback, useState } from "react";
 import Image from "next/image";
 import { Cross2Icon, ImageIcon, UploadIcon } from "@radix-ui/react-icons";
+import { useMutation } from "@tanstack/react-query";
 
 import { Button, cn } from "@acme/ui";
 
 import { useTRPC } from "~/trpc/react";
-import { useMutation } from "@tanstack/react-query";
 
 interface UploadedImage {
   id: string;
@@ -18,43 +18,93 @@ interface UploadedImage {
   error?: string;
 }
 
+type EntityType = "product" | "report";
+
 interface ImageUploadProps {
-  reportId: string;
-  onImagesChange?: (images: UploadedImage[]) => void;
+  /**
+   * Type of entity the image belongs to
+   */
+  entityType: EntityType;
+
+  /**
+   * ID of the entity (productId or reportId)
+   * Required for immediate upload mode
+   */
+  entityId?: string;
+
+  /**
+   * Maximum number of images allowed
+   * Default: 1 for products, 5 for reports
+   */
   maxImages?: number;
+
+  /**
+   * Callback when images change (immediate upload mode)
+   */
+  onImagesChange?: (images: UploadedImage[]) => void;
+
+  /**
+   * Callback when files are selected (staged mode - when entityId is not provided)
+   * Use this to collect files for upload after entity creation
+   */
+  onFilesSelect?: (files: File[]) => void;
+
+  /**
+   * Whether the component is disabled
+   */
+  disabled?: boolean;
+
+  /**
+   * Additional CSS classes
+   */
   className?: string;
 }
 
+/**
+ * Unified image upload component for both products and reports.
+ *
+ * Two modes of operation:
+ * 1. Immediate upload (entityId provided): Uploads immediately to storage
+ * 2. Staged mode (no entityId): Collects files for later upload via onFilesSelect
+ */
 export function ImageUpload({
-  reportId,
+  entityType,
+  entityId,
+  maxImages,
   onImagesChange,
-  maxImages = 5,
+  onFilesSelect,
+  disabled = false,
   className,
 }: ImageUploadProps) {
+  // Default maxImages based on entity type
+  const effectiveMaxImages = maxImages ?? (entityType === "product" ? 1 : 5);
+
   const [images, setImages] = useState<UploadedImage[]>([]);
+  const [stagedFiles, setStagedFiles] = useState<File[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
 
   const trpc = useTRPC();
 
   const requestUploadUrl = useMutation(
-    trpc.reportImage.requestUploadUrl.mutationOptions()
+    trpc.image.requestUploadUrl.mutationOptions(),
   );
 
-  const confirmUpload = useMutation(
-    trpc.reportImage.confirmUpload.mutationOptions()
-  );
+  const confirmUpload = useMutation(trpc.image.confirmUpload.mutationOptions());
+
+  // Check if we're in staged mode (no entityId)
+  const isStaged = !entityId;
 
   const updateImage = useCallback(
     (id: string, updates: Partial<UploadedImage>) => {
       setImages((prev) => {
         const updated = prev.map((img) =>
-          img.id === id ? { ...img, ...updates } : img
+          img.id === id ? { ...img, ...updates } : img,
         );
         onImagesChange?.(updated);
         return updated;
       });
     },
-    [onImagesChange]
+    [onImagesChange],
   );
 
   const removeImage = useCallback(
@@ -65,11 +115,24 @@ export function ImageUpload({
         return updated;
       });
     },
-    [onImagesChange]
+    [onImagesChange],
+  );
+
+  const removeStagedFile = useCallback(
+    (index: number) => {
+      setStagedFiles((prev) => {
+        const updated = prev.filter((_, i) => i !== index);
+        onFilesSelect?.(updated);
+        return updated;
+      });
+    },
+    [onFilesSelect],
   );
 
   const uploadFile = useCallback(
     async (file: File) => {
+      if (!entityId) return;
+
       // Validate file type
       if (!file.type.startsWith("image/")) {
         return;
@@ -124,7 +187,8 @@ export function ImageUpload({
         // 3. Confirm upload and process with Sharp
         const result = await confirmUpload.mutateAsync({
           tempPath,
-          reportId,
+          entityType,
+          entityId,
         });
 
         // 4. Update with final URL
@@ -142,20 +206,48 @@ export function ImageUpload({
         });
       }
     },
-    [reportId, requestUploadUrl, confirmUpload, updateImage, onImagesChange]
+    [
+      entityId,
+      entityType,
+      requestUploadUrl,
+      confirmUpload,
+      updateImage,
+      onImagesChange,
+    ],
   );
 
   const handleFiles = useCallback(
     (files: FileList | File[]) => {
-      const fileArray = Array.from(files);
-      const remaining = maxImages - images.length;
-      const toUpload = fileArray.slice(0, remaining);
+      const fileArray = Array.from(files).filter(
+        (f) => f.type.startsWith("image/") && f.size <= 50 * 1024 * 1024,
+      );
 
-      toUpload.forEach((file) => {
-        void uploadFile(file);
-      });
+      if (isStaged) {
+        // Staged mode: collect files for later upload
+        const remaining = effectiveMaxImages - stagedFiles.length;
+        const toAdd = fileArray.slice(0, remaining);
+        setStagedFiles((prev) => {
+          const updated = [...prev, ...toAdd];
+          onFilesSelect?.(updated);
+          return updated;
+        });
+      } else {
+        // Immediate upload mode
+        const remaining = effectiveMaxImages - images.length;
+        const toUpload = fileArray.slice(0, remaining);
+        toUpload.forEach((file) => {
+          void uploadFile(file);
+        });
+      }
     },
-    [images.length, maxImages, uploadFile]
+    [
+      isStaged,
+      effectiveMaxImages,
+      stagedFiles.length,
+      images.length,
+      uploadFile,
+      onFilesSelect,
+    ],
   );
 
   const handleDrop = useCallback(
@@ -163,17 +255,24 @@ export function ImageUpload({
       e.preventDefault();
       setIsDragOver(false);
 
+      if (disabled) return;
+
       if (e.dataTransfer.files.length > 0) {
         handleFiles(e.dataTransfer.files);
       }
     },
-    [handleFiles]
+    [disabled, handleFiles],
   );
 
-  const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  }, []);
+  const handleDragOver = useCallback(
+    (e: DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      if (!disabled) {
+        setIsDragOver(true);
+      }
+    },
+    [disabled],
+  );
 
   const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -187,10 +286,15 @@ export function ImageUpload({
         e.target.value = ""; // Reset input
       }
     },
-    [handleFiles]
+    [handleFiles],
   );
 
-  const canAddMore = images.length < maxImages;
+  // Determine current count and if we can add more
+  const currentCount = isStaged ? stagedFiles.length : images.length;
+  const canAddMore = currentCount < effectiveMaxImages;
+
+  // Use grid for multiple images, single display for one
+  const isSingleMode = effectiveMaxImages === 1;
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -201,36 +305,97 @@ export function ImageUpload({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           className={cn(
-            "relative flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors",
+            "relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors",
+            isSingleMode
+              ? "aspect-video w-full max-w-xs"
+              : "min-h-32",
             isDragOver
               ? "border-primary bg-primary/5"
-              : "border-muted-foreground/25 hover:border-muted-foreground/50"
+              : "border-muted-foreground/25 hover:border-muted-foreground/50",
+            disabled && "cursor-not-allowed opacity-50",
           )}
         >
           <input
             type="file"
             accept="image/*"
-            multiple
+            multiple={effectiveMaxImages > 1}
             onChange={handleInputChange}
-            className="absolute inset-0 cursor-pointer opacity-0"
+            disabled={disabled}
+            className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
           />
-          <UploadIcon className="text-muted-foreground mb-2 h-8 w-8" />
-          <p className="text-muted-foreground text-sm">
-            Drag & drop images or click to browse
+          <UploadIcon className="mb-2 h-8 w-8 text-muted-foreground" />
+          <p className="text-center text-sm text-muted-foreground">
+            Drag & drop {effectiveMaxImages > 1 ? "images" : "an image"} or
+            click to browse
           </p>
-          <p className="text-muted-foreground/60 mt-1 text-xs">
-            {images.length}/{maxImages} images
-          </p>
+          {effectiveMaxImages > 1 && (
+            <p className="mt-1 text-xs text-muted-foreground/60">
+              {currentCount}/{effectiveMaxImages} images
+            </p>
+          )}
         </div>
       )}
 
-      {/* Image previews */}
-      {images.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+      {/* Staged file previews (before upload) */}
+      {isStaged && stagedFiles.length > 0 && (
+        <div
+          className={cn(
+            isSingleMode
+              ? ""
+              : "grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4",
+          )}
+        >
+          {stagedFiles.map((file, index) => {
+            const previewUrl = URL.createObjectURL(file);
+            return (
+              <div
+                key={`staged-${index}`}
+                className={cn(
+                  "group relative overflow-hidden rounded-lg border",
+                  isSingleMode ? "aspect-video w-full max-w-xs" : "aspect-square",
+                )}
+              >
+                <Image
+                  src={previewUrl}
+                  alt="Upload preview"
+                  fill
+                  className="object-cover"
+                  unoptimized
+                  onLoad={() => URL.revokeObjectURL(previewUrl)}
+                />
+                {!disabled && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute right-1 top-1 h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
+                    onClick={() => removeStagedFile(index)}
+                  >
+                    <Cross2Icon className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Uploaded image previews (immediate mode) */}
+      {!isStaged && images.length > 0 && (
+        <div
+          className={cn(
+            isSingleMode
+              ? ""
+              : "grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4",
+          )}
+        >
           {images.map((image) => (
             <div
               key={image.id}
-              className="group relative aspect-square overflow-hidden rounded-lg border"
+              className={cn(
+                "group relative overflow-hidden rounded-lg border",
+                isSingleMode ? "aspect-video w-full max-w-xs" : "aspect-square",
+              )}
             >
               {image.url ? (
                 <Image
@@ -241,8 +406,8 @@ export function ImageUpload({
                   unoptimized={image.status !== "complete"}
                 />
               ) : (
-                <div className="bg-muted flex h-full items-center justify-center">
-                  <ImageIcon className="text-muted-foreground h-8 w-8" />
+                <div className="flex h-full items-center justify-center bg-muted">
+                  <ImageIcon className="h-8 w-8 text-muted-foreground" />
                 </div>
               )}
 
@@ -251,7 +416,7 @@ export function ImageUpload({
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                   <div className="text-center text-white">
                     <div className="mb-1 text-sm">Uploading...</div>
-                    <div className="bg-white/30 mx-auto h-1 w-16 overflow-hidden rounded-full">
+                    <div className="mx-auto h-1 w-16 overflow-hidden rounded-full bg-white/30">
                       <div
                         className="h-full bg-white transition-all"
                         style={{ width: `${image.progress ?? 0}%` }}
@@ -278,15 +443,17 @@ export function ImageUpload({
               )}
 
               {/* Remove button */}
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon"
-                className="absolute top-1 right-1 h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
-                onClick={() => removeImage(image.id)}
-              >
-                <Cross2Icon className="h-3 w-3" />
-              </Button>
+              {!disabled && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute right-1 top-1 h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
+                  onClick={() => removeImage(image.id)}
+                >
+                  <Cross2Icon className="h-3 w-3" />
+                </Button>
+              )}
             </div>
           ))}
         </div>
@@ -294,3 +461,6 @@ export function ImageUpload({
     </div>
   );
 }
+
+// Re-export types for consumers
+export type { UploadedImage, EntityType, ImageUploadProps };

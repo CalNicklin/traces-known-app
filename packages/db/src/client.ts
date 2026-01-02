@@ -4,7 +4,10 @@ import postgres from "postgres";
 import * as allergenSchema from "./schema/allergen-schema";
 import * as authSchema from "./schema/auth-schema";
 import * as categorySchema from "./schema/category-schema";
+import * as commentSchema from "./schema/comment-schema";
+import * as notificationSchema from "./schema/notification-schema";
 import * as postSchema from "./schema/posts-schema";
+import * as productImageSchema from "./schema/product-image-schema";
 import * as productSchema from "./schema/product-schema";
 import * as productViewSchema from "./schema/product-view-schema";
 import * as relations from "./schema/relations";
@@ -29,11 +32,14 @@ export const db = drizzle(client, {
     ...authSchema,
     ...postSchema,
     ...productSchema,
+    ...productImageSchema,
     ...reportSchema,
     ...reportImageSchema,
     ...allergenSchema,
     ...categorySchema,
     ...productViewSchema,
+    ...commentSchema,
+    ...notificationSchema,
     ...relations,
   },
   casing: "snake_case",
