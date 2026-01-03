@@ -10,4 +10,5 @@ export * from "./product-view-schema";
 export * from "./comment-schema";
 export * from "./notification-schema";
 export * from "./product-image-schema";
+export * from "./product-ai-summary-schema";
 export * from "./relations";

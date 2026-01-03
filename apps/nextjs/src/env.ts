@@ -19,6 +19,8 @@ export const env = createEnv({
     POSTGRES_URL: z.string().url(),
     SUPABASE_URL: z.string().url(),
     SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+    OPENAI_API_KEY: z.string().min(1),
+    CRON_SECRET: z.string().min(1).optional(), // Vercel provides this in production
   },
 
   /**

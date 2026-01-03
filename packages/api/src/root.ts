@@ -1,3 +1,4 @@
+import { aiSummaryRouter } from "./router/ai-summary";
 import { allergenRouter } from "./router/allergen";
 import { authRouter } from "./router/auth";
 import { categoryRouter } from "./router/category";
@@ -11,6 +12,7 @@ import { reportRouter } from "./router/report";
 import { createTRPCRouter } from "./trpc";
 
 export const appRouter = createTRPCRouter({
+  aiSummary: aiSummaryRouter,
   allergen: allergenRouter,
   auth: authRouter,
   category: categoryRouter,

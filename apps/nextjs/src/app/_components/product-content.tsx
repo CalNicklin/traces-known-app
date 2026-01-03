@@ -5,22 +5,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   useMutation,
+  useQuery,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Text,
-} from "@acme/ui";
+import { Card, CardContent, CardHeader, CardTitle, Text } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 
+import { formatDate } from "~/lib/user";
 import { useTRPC } from "~/trpc/react";
 import { ProductGallery, ProductGallerySkeleton } from "./product-gallery";
 import { ReportThread } from "./report-thread";
+import { RiskBadge } from "./risk-badge";
 
 interface ProductContentProps {
   id: string;
@@ -46,6 +43,11 @@ export function ProductContent({ id }: ProductContentProps) {
 
   const { data: reports } = useSuspenseQuery(
     trpc.report.byProductId.queryOptions({ productId: id }),
+  );
+
+  // AI summary is optional - may not exist for all products
+  const { data: aiSummary } = useQuery(
+    trpc.aiSummary.byProductId.queryOptions({ productId: id }),
   );
 
   const handleReportChange = () => {
@@ -137,6 +139,33 @@ export function ProductContent({ id }: ProductContentProps) {
               )}
             </CardContent>
           </Card>
+
+          {aiSummary && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  Community Insights
+                  <RiskBadge
+                    level={
+                      aiSummary.riskLevel as
+                        | "low"
+                        | "moderate"
+                        | "high"
+                        | "unknown"
+                    }
+                  />
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Text>{aiSummary.summary}</Text>
+                <Text variant="muted" className="text-xs">
+                  Based on {aiSummary.reportCount} community reports. Last
+                  updated {formatDate(aiSummary.updatedAt)}. This is not medical
+                  advice.
+                </Text>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>

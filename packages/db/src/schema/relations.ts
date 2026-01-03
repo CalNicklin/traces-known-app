@@ -5,6 +5,7 @@ import { user } from "./auth-schema";
 import { Category, ProductCategory } from "./category-schema";
 import { ReportComment } from "./comment-schema";
 import { Notification } from "./notification-schema";
+import { ProductAISummary } from "./product-ai-summary-schema";
 import { ProductImage } from "./product-image-schema";
 import { Product } from "./product-schema";
 import { ProductView } from "./product-view-schema";
@@ -17,13 +18,25 @@ import { Report, ReportAllergen } from "./report-schema";
 // =============================================================================
 
 // Product relations
-export const ProductRelations = relations(Product, ({ many }) => ({
+export const ProductRelations = relations(Product, ({ many, one }) => ({
   productAllergens: many(ProductAllergen),
   productCategories: many(ProductCategory),
   productViews: many(ProductView),
   reports: many(Report),
   images: many(ProductImage),
+  aiSummary: one(ProductAISummary),
 }));
+
+// ProductAISummary relations
+export const ProductAISummaryRelations = relations(
+  ProductAISummary,
+  ({ one }) => ({
+    product: one(Product, {
+      fields: [ProductAISummary.productId],
+      references: [Product.id],
+    }),
+  })
+);
 
 // ProductAllergen relations (junction table)
 export const ProductAllergenRelations = relations(
