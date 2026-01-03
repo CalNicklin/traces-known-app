@@ -45,7 +45,7 @@ export async function summarizeReports(
     system: `You summarise community allergy reports for food products to help people with allergies understand real-world experiences.
 
 Your role:
-- Summarize what the community has experienced (reactions vs. no reactions)
+- Summarise what the community has experienced (reactions vs. no reactions)
 - Focus on "may contain" warnings and whether products actually caused reactions
 - Keep summary under 50 words
 - Be objective and factual about what was reported
@@ -58,7 +58,7 @@ Risk level guidelines (be decisive, avoid "unknown" when possible):
 
 When in doubt between levels, err on the side of caution (choose the higher risk level).
 
-IMPORTANT: This is NOT medical advice. You are summarizing community experiences only.`,
+IMPORTANT: This is NOT medical advice. You are summarising community experiences only.`,
     prompt: `Product: ${productName}
 Allergen Warning: ${allergenWarning ?? "None specified"}
 
