@@ -23,7 +23,7 @@ if (!process.env.POSTGRES_URL) {
 // Must set prepare: false for compatibility
 const client = postgres(process.env.POSTGRES_URL, {
   prepare: false, // Required for Supabase Transaction pooler mode
-  max: 1, // Limit connections for serverless environments
+  max: 10, // Allow multiple concurrent connections for SSR + API requests
   idle_timeout: 20, // Close idle connections after 20 seconds
   connect_timeout: 10, // Connection timeout in seconds
   max_lifetime: 60 * 5, // Force connection refresh every 5 minutes (before pooler kills it)
