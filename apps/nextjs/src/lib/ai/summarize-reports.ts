@@ -42,7 +42,7 @@ export async function summarizeReports(
   const { output } = await generateText({
     model: openai("gpt-5"),
     output: Output.object({ schema: SummaryResponseSchema }),
-    system: `You summarize community allergy reports for food products to help people with allergies understand real-world experiences.
+    system: `You summarise community allergy reports for food products to help people with allergies understand real-world experiences.
 
 Your role:
 - Summarize what the community has experienced (reactions vs. no reactions)
