@@ -4,10 +4,10 @@ import { z } from "zod/v4";
 import { desc, eq } from "@acme/db";
 import { Allergen, CreateAllergenSchema, UserAllergen } from "@acme/db/schema";
 
-import { protectedProcedure, publicProcedure } from "../trpc";
+import { protectedProcedure } from "../trpc";
 
 export const allergenRouter = {
-  all: publicProcedure.query(async ({ ctx }) => {
+  all: protectedProcedure.query(async ({ ctx }) => {
     const items = await ctx.db.query.Allergen.findMany({
       orderBy: desc(Allergen.name),
     });
@@ -20,7 +20,7 @@ export const allergenRouter = {
     };
   }),
 
-  byId: publicProcedure
+  byId: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(({ ctx, input }) => {
       return ctx.db.query.Allergen.findFirst({

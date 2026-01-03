@@ -9,11 +9,11 @@ import {
   UpsertProductAISummarySchema,
 } from "@acme/db/schema";
 
-import { protectedProcedure, publicProcedure } from "../trpc";
+import { protectedProcedure } from "../trpc";
 
 export const aiSummaryRouter = {
   // Get AI summary for a product (used by UI)
-  byProductId: publicProcedure
+  byProductId: protectedProcedure
     .input(z.object({ productId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       return ctx.db.query.ProductAISummary.findFirst({

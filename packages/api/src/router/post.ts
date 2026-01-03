@@ -4,17 +4,17 @@ import { z } from "zod/v4";
 import { desc, eq } from "@acme/db";
 import { CreatePostSchema, Post } from "@acme/db/schema";
 
-import { protectedProcedure, publicProcedure } from "../trpc";
+import { protectedProcedure } from "../trpc";
 
 export const postRouter = {
-  all: publicProcedure.query(({ ctx }) => {
+  all: protectedProcedure.query(({ ctx }) => {
     return ctx.db.query.Post.findMany({
       orderBy: desc(Post.id),
       limit: 10,
     });
   }),
 
-  byId: publicProcedure
+  byId: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(({ ctx, input }) => {
       return ctx.db.query.Post.findFirst({

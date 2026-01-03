@@ -9,10 +9,10 @@ import {
   UpdateReportSchema,
 } from "@acme/db/schema";
 
-import { protectedProcedure, publicProcedure } from "../trpc";
+import { protectedProcedure } from "../trpc";
 
 export const reportRouter = {
-  byProductId: publicProcedure
+  byProductId: protectedProcedure
     .input(z.object({ productId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const reports = await ctx.db.query.Report.findMany({
@@ -36,7 +36,7 @@ export const reportRouter = {
       return reports;
     }),
 
-  byId: publicProcedure
+  byId: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const report = await ctx.db.query.Report.findFirst({

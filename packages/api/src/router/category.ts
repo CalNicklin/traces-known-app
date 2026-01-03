@@ -8,11 +8,11 @@ import {
   ProductCategory,
 } from "@acme/db/schema";
 
-import { protectedProcedure, publicProcedure } from "../trpc";
+import { protectedProcedure } from "../trpc";
 
 export const categoryRouter = {
   /** Get all categories with product counts */
-  all: publicProcedure.query(async ({ ctx }) => {
+  all: protectedProcedure.query(async ({ ctx }) => {
     const categories = await ctx.db.query.Category.findMany({
       orderBy: desc(Category.name),
     });
@@ -36,7 +36,7 @@ export const categoryRouter = {
   }),
 
   /** Get category by slug */
-  bySlug: publicProcedure
+  bySlug: protectedProcedure
     .input(z.object({ slug: z.string() }))
     .query(({ ctx, input }) => {
       return ctx.db.query.Category.findFirst({
@@ -45,7 +45,7 @@ export const categoryRouter = {
     }),
 
   /** Get category by ID */
-  byId: publicProcedure
+  byId: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(({ ctx, input }) => {
       return ctx.db.query.Category.findFirst({

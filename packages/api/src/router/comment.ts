@@ -11,10 +11,10 @@ import {
   UpdateReportCommentSchema,
 } from "@acme/db/schema";
 
-import { protectedProcedure, publicProcedure } from "../trpc";
+import { protectedProcedure } from "../trpc";
 
 export const commentRouter = {
-  byReportId: publicProcedure
+  byReportId: protectedProcedure
     .input(z.object({ reportId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const comments = await ctx.db.query.ReportComment.findMany({

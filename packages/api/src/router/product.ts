@@ -11,17 +11,17 @@ import {
   Report,
 } from "@acme/db/schema";
 
-import { protectedProcedure, publicProcedure } from "../trpc";
+import { protectedProcedure } from "../trpc";
 
 export const productRouter = {
-  all: publicProcedure.query(({ ctx }) => {
+  all: protectedProcedure.query(({ ctx }) => {
     return ctx.db.query.Product.findMany({
       orderBy: desc(Product.name),
       limit: 50,
     });
   }),
 
-  byId: publicProcedure
+  byId: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(({ ctx, input }) => {
       return ctx.db.query.Product.findFirst({
@@ -29,7 +29,7 @@ export const productRouter = {
       });
     }),
 
-  byBarcode: publicProcedure
+  byBarcode: protectedProcedure
     .input(z.object({ barcode: z.string() }))
     .query(async ({ ctx, input }) => {
       const product = await ctx.db.query.Product.findFirst({
@@ -38,7 +38,7 @@ export const productRouter = {
       return product ?? null;
     }),
 
-  byName: publicProcedure
+  byName: protectedProcedure
     .input(z.object({ name: z.string() }))
     .query(async ({ ctx, input }) => {
       const products = await ctx.db.query.Product.findMany({
@@ -52,7 +52,7 @@ export const productRouter = {
       return products;
     }),
 
-  search: publicProcedure
+  search: protectedProcedure
     .input(
       z.object({
         query: z.string(),
@@ -159,7 +159,7 @@ export const productRouter = {
     }),
 
   /** Get recently added products to the system */
-  recentlyAdded: publicProcedure
+  recentlyAdded: protectedProcedure
     .input(z.object({ limit: z.number().default(10) }).optional())
     .query(async ({ ctx, input }) => {
       return ctx.db.query.Product.findMany({

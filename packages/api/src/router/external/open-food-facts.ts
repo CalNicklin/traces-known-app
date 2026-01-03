@@ -11,13 +11,13 @@ import {
   TooManyRequestsError,
 } from "@acme/external-services";
 
-import { publicProcedure } from "../../trpc";
+import { protectedProcedure } from "../../trpc";
 
 export const openFoodFactsRouter = {
   /**
    * Get product by code (barcode) from Open Food Facts
    */
-  byCode: publicProcedure
+  byCode: protectedProcedure
     .input(
       z.object({
         code: z.string().min(1),
@@ -87,7 +87,7 @@ export const openFoodFactsRouter = {
   /**
    * Search for products in Open Food Facts
    */
-  search: publicProcedure
+  search: protectedProcedure
     .input(
       z.object({
         query: z.string().min(1),

@@ -13,7 +13,7 @@ import {
 } from "@acme/db/schema";
 
 import { createUploadUrl, deleteImage, processImage } from "../lib/storage";
-import { protectedProcedure, publicProcedure } from "../trpc";
+import { protectedProcedure } from "../trpc";
 
 // Entity types for image uploads
 const EntityTypeSchema = z.enum(["product", "report"]);
@@ -127,7 +127,7 @@ export const imageRouter = {
   /**
    * Get images by entity
    */
-  byEntity: publicProcedure
+  byEntity: protectedProcedure
     .input(
       z.object({
         entityType: EntityTypeSchema,
@@ -154,7 +154,7 @@ export const imageRouter = {
   /**
    * Get report images for a product (from all reports)
    */
-  reportImagesByProductId: publicProcedure
+  reportImagesByProductId: protectedProcedure
     .input(z.object({ productId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       // Get all reports for this product, then get their images
