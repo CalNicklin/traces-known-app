@@ -64,12 +64,28 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 
 const getBaseUrl = () => {
   if (typeof window !== "undefined") return window.location.origin;
+
+  // Log env vars in production for debugging (remove after confirming fix)
+  if (typeof window === "undefined") {
+    console.log("[tRPC] getBaseUrl SSR:", {
+      VERCEL_ENV: env.VERCEL_ENV,
+      VERCEL_PROJECT_PRODUCTION_URL: env.VERCEL_PROJECT_PRODUCTION_URL,
+      VERCEL_URL: env.VERCEL_URL,
+    });
+  }
+
   // In production, use the production URL to avoid redirects that return HTML
   if (env.VERCEL_ENV === "production" && env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`;
+    const url = `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`;
+    console.log("[tRPC] Using production URL:", url);
+    return url;
   }
   // Preview deployments use VERCEL_URL
-  if (env.VERCEL_URL) return `https://${env.VERCEL_URL}`;
+  if (env.VERCEL_URL) {
+    const url = `https://${env.VERCEL_URL}`;
+    console.log("[tRPC] Using VERCEL_URL:", url);
+    return url;
+  }
   // eslint-disable-next-line no-restricted-properties
   return `http://localhost:${process.env.PORT ?? 3000}`;
 };
