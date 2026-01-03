@@ -53,9 +53,12 @@ const geistMono = Geist_Mono({
 export default async function RootLayout(props: {
   children: React.ReactNode;
 }) {
-  // Get cookies for SSR tRPC calls
+  // Get cookies for SSR tRPC calls - serialize properly for forwarding
   const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
+  const cookieHeader = cookieStore
+    .getAll()
+    .map((c) => `${c.name}=${c.value}`)
+    .join("; ");
 
   return (
     <html lang="en" suppressHydrationWarning>

@@ -51,7 +51,7 @@ export function TRPCReactProvider(props: {
             headers.set("x-trpc-source", "nextjs-react");
             // Forward cookies during SSR for auth
             if (typeof window === "undefined" && props.cookies) {
-              console.log("[tRPC] Forwarding cookies during SSR");
+              console.log("[tRPC] Forwarding cookies during SSR:", props.cookies.substring(0, 50) + "...");
               headers.set("cookie", props.cookies);
             }
             return headers;
