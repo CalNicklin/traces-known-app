@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { cn } from "@acme/ui";
@@ -49,7 +50,13 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
 });
 
-export default function RootLayout(props: { children: React.ReactNode }) {
+export default async function RootLayout(props: {
+  children: React.ReactNode;
+}) {
+  // Get cookies for SSR tRPC calls
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -60,7 +67,7 @@ export default function RootLayout(props: { children: React.ReactNode }) {
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <TRPCReactProvider>
+          <TRPCReactProvider cookies={cookieHeader}>
             <Navigation />
             {props.children}
           </TRPCReactProvider>

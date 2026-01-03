@@ -29,7 +29,10 @@ const getQueryClient = () => {
 
 export const { useTRPC, TRPCProvider } = createTRPCContext<AppRouter>();
 
-export function TRPCReactProvider(props: { children: React.ReactNode }) {
+export function TRPCReactProvider(props: {
+  children: React.ReactNode;
+  cookies: string;
+}) {
   const queryClient = getQueryClient();
 
   const [trpcClient] = useState(() =>
@@ -46,6 +49,11 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
           headers() {
             const headers = new Headers();
             headers.set("x-trpc-source", "nextjs-react");
+            // Forward cookies during SSR for auth
+            if (typeof window === "undefined" && props.cookies) {
+              console.log("[tRPC] Forwarding cookies during SSR");
+              headers.set("cookie", props.cookies);
+            }
             return headers;
           },
         }),
