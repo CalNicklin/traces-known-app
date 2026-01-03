@@ -26,6 +26,7 @@ const client = postgres(process.env.POSTGRES_URL, {
   max: 1, // Limit connections for serverless environments
   idle_timeout: 20, // Close idle connections after 20 seconds
   connect_timeout: 10, // Connection timeout in seconds
+  max_lifetime: 60 * 5, // Force connection refresh every 5 minutes (before pooler kills it)
 });
 
 export const db = drizzle(client, {
