@@ -16,6 +16,7 @@ export const Report = appSchema.table("report", (t) => ({
     .uuid()
     .notNull()
     .references(() => Product.id, { onDelete: "cascade" }),
+  reportType: t.varchar({ length: 20 }).notNull().default("reaction"), // "safe" | "reaction"
   allergenIds: t.uuid().array(),
   comment: t.text(),
   reportDate: t.timestamp().defaultNow().notNull(),
@@ -39,8 +40,12 @@ export const ReportAllergen = appSchema.table("report_allergen", (t) => ({
 // Relations are defined in relations.ts to avoid duplicate definitions
 
 // Schemas
+export const ReportTypeEnum = z.enum(["safe", "reaction"]);
+export type ReportType = z.infer<typeof ReportTypeEnum>;
+
 export const CreateReportSchema = createInsertSchema(Report, {
   productId: z.string().uuid(),
+  reportType: ReportTypeEnum,
   allergenIds: z.array(z.string().uuid()).optional(),
   comment: z.string().optional(),
 }).omit({

@@ -70,7 +70,7 @@ export function ProductContent({ id }: ProductContentProps) {
           )}
         </div>
         <Button asChild>
-          <Link href={`/report?productId=${id}`}>Report Allergy Reaction</Link>
+          <Link href={`/report?productId=${id}`}>Report Your Experience</Link>
         </Button>
       </div>
 

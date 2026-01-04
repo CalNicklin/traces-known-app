@@ -1,0 +1,1 @@
+ALTER TABLE "app"."report" ADD COLUMN "report_type" varchar(20) DEFAULT 'reaction' NOT NULL;

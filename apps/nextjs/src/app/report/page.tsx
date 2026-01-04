@@ -13,7 +13,7 @@ function ReportFormSkeleton() {
   return (
     <Card className="mx-auto w-full max-w-2xl">
       <CardHeader>
-        <CardTitle>Report Allergy Reaction</CardTitle>
+        <CardTitle>Report Your Experience</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
@@ -68,10 +68,10 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
       <div className="mx-auto max-w-4xl space-y-6">
         {/* Introduction */}
         <div className="text-center">
-          <h1 className="mb-2 text-3xl font-bold">Report Allergy Reaction</h1>
+          <h1 className="mb-2 text-3xl font-bold">Report Your Experience</h1>
           <p className="text-muted-foreground">
-            Share your allergy experience to help others with similar allergies
-            make informed choices.
+            Share your experience with a product to help others with similar
+            allergies make informed choices.
           </p>
         </div>
 

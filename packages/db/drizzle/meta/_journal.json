@@ -29,6 +29,13 @@
       "when": 1767468372633,
       "tag": "0003_add_product_ai_summary",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1767515003573,
+      "tag": "0004_spicy_steel_serpent",
+      "breakpoints": true
     }
   ]
 }

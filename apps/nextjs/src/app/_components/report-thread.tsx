@@ -38,6 +38,7 @@ interface Report {
   id: string;
   userId: string;
   productId: string;
+  reportType: string;
   allergenIds: string[] | null;
   comment: string | null;
   reportDate: Date;
@@ -144,7 +145,7 @@ export function ReportThread({
       {/* Report Header */}
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0">
-          {report.allergenIds && report.allergenIds.length > 0 ? (
+          {report.reportType === "reaction" ? (
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-danger/10 text-danger">
               <svg
                 className="h-4 w-4"
@@ -262,11 +263,18 @@ export function ReportThread({
                 <Text variant="muted">{report.comment}</Text>
               )}
 
-              {report.allergenIds && report.allergenIds.length > 0 && (
-                <Text variant="caption" className="text-danger">
-                  Reported allergen reaction
-                </Text>
-              )}
+              <Text
+                variant="caption"
+                className={
+                  report.reportType === "reaction"
+                    ? "text-danger"
+                    : "text-green-600 dark:text-green-400"
+                }
+              >
+                {report.reportType === "reaction"
+                  ? "Reported allergic reaction"
+                  : "Reported safe experience"}
+              </Text>
             </>
           )}
 

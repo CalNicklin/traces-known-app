@@ -1,39 +1,28 @@
 "use client";
 
+import { useForm } from "@tanstack/react-form";
 import {
   useMutation,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
+import { z } from "zod/v4";
 
 import type { RouterOutputs } from "@acme/api";
-import { CreatePostSchema } from "@acme/db/schema";
-import { cn } from "@acme/ui";
+import { cn, Field, FieldError } from "@acme/ui";
 import { Button } from "@acme/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-  useForm,
-} from "@acme/ui/form";
 import { Input } from "@acme/ui/input";
 import { toast } from "@acme/ui/toast";
 
 import { useTRPC } from "~/trpc/react";
 
+const titleSchema = z.string().min(1, "Title is required");
+const contentSchema = z.string().min(1, "Content is required");
+
 export function CreatePostForm() {
   const trpc = useTRPC();
-  const form = useForm({
-    schema: CreatePostSchema,
-    defaultValues: {
-      content: "",
-      title: "",
-    },
-  });
-
   const queryClient = useQueryClient();
+
   const createPost = useMutation(
     trpc.post.create.mutationOptions({
       onSuccess: async () => {
@@ -50,41 +39,96 @@ export function CreatePostForm() {
     }),
   );
 
+  const form = useForm({
+    defaultValues: {
+      title: "",
+      content: "",
+    },
+    onSubmit: async ({ value }) => {
+      createPost.mutate(value);
+    },
+  });
+
   return (
-    <Form {...form}>
-      <form
-        className="flex w-full max-w-2xl flex-col gap-4"
-        onSubmit={form.handleSubmit((data) => {
-          createPost.mutate(data);
-        })}
+    <form
+      className="flex w-full max-w-2xl flex-col gap-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        void form.handleSubmit();
+      }}
+    >
+      <form.Field
+        name="title"
+        validators={{
+          onChange: ({ value }) => {
+            const result = titleSchema.safeParse(value);
+            return result.success ? undefined : result.error.issues[0]?.message;
+          },
+        }}
       >
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Input {...field} placeholder="Title" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="content"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Input {...field} placeholder="Content" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button>Create</Button>
-      </form>
-    </Form>
+        {(field) => {
+          const isInvalid =
+            field.state.meta.isTouched && !field.state.meta.isValid;
+          return (
+            <Field data-invalid={isInvalid}>
+              <Input
+                id={field.name}
+                name={field.name}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+                placeholder="Title"
+                aria-invalid={isInvalid}
+              />
+              {isInvalid && (
+                <FieldError errors={field.state.meta.errors as string[]} />
+              )}
+            </Field>
+          );
+        }}
+      </form.Field>
+
+      <form.Field
+        name="content"
+        validators={{
+          onChange: ({ value }) => {
+            const result = contentSchema.safeParse(value);
+            return result.success ? undefined : result.error.issues[0]?.message;
+          },
+        }}
+      >
+        {(field) => {
+          const isInvalid =
+            field.state.meta.isTouched && !field.state.meta.isValid;
+          return (
+            <Field data-invalid={isInvalid}>
+              <Input
+                id={field.name}
+                name={field.name}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+                placeholder="Content"
+                aria-invalid={isInvalid}
+              />
+              {isInvalid && (
+                <FieldError errors={field.state.meta.errors as string[]} />
+              )}
+            </Field>
+          );
+        }}
+      </form.Field>
+
+      <form.Subscribe
+        selector={(state) => [state.canSubmit, state.isSubmitting]}
+      >
+        {([canSubmit, isSubmitting]) => (
+          <Button type="submit" disabled={!canSubmit || isSubmitting}>
+            {isSubmitting ? "Creating..." : "Create"}
+          </Button>
+        )}
+      </form.Subscribe>
+    </form>
   );
 }
 
