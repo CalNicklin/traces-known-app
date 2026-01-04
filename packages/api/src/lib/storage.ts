@@ -3,7 +3,7 @@ import sharp from "sharp";
 
 import { env } from "../env";
 
-const BUCKET_NAME = "user-uploads";
+const BUCKET_NAME = "user-product-images";
 const TEMP_FOLDER = "temp";
 
 // Folder mapping for different entity types
