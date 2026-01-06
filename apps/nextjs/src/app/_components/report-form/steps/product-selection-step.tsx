@@ -1,10 +1,17 @@
 "use client";
 
-import { Field, FieldDescription, FieldError, FieldLabel, Text } from "@acme/ui";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  Text,
+} from "@acme/ui";
 import { Button } from "@acme/ui/button";
 import { Input } from "@acme/ui/input";
 
 import type { ProductSearchResult } from "../types";
+import { BarcodeScannerDialog } from "../../barcode-scanner-dialog";
 
 interface ProductSelectionStepProps {
   productSearch: string;
@@ -22,7 +29,7 @@ interface ProductSelectionStepProps {
   barcodeLookup: string;
   setBarcodeLookup: (value: string) => void;
   isBarcodeLookingUp: boolean;
-  onBarcodeLookup: () => void;
+  onBarcodeLookup: (barcodeOverride?: string) => void;
   isSubmitting: boolean;
 }
 
@@ -68,15 +75,21 @@ export function ProductSelectionStep({
           />
           <Button
             type="button"
-            onClick={onBarcodeLookup}
-            disabled={isBarcodeLookingUp || isSubmitting || !barcodeLookup.trim()}
+            onClick={() => onBarcodeLookup()}
+            disabled={
+              isBarcodeLookingUp || isSubmitting || !barcodeLookup.trim()
+            }
           >
             {isBarcodeLookingUp ? "Looking up..." : "Lookup"}
           </Button>
+          <BarcodeScannerDialog
+            onDetected={(barcode) => onBarcodeLookup(barcode)}
+            disabled={isBarcodeLookingUp || isSubmitting}
+          />
         </div>
         <p className="mt-2 text-sm text-muted-foreground">
-          Search Open Food Facts database to automatically find or add product
-          information
+          Scan or enter a barcode to find products in the Open Food Facts
+          database
         </p>
       </div>
 
@@ -112,7 +125,9 @@ export function ProductSelectionStep({
                         <Text variant="caption">{product.brand}</Text>
                       )}
                       {product.barcode && (
-                        <Text variant="caption">Barcode: {product.barcode}</Text>
+                        <Text variant="caption">
+                          Barcode: {product.barcode}
+                        </Text>
                       )}
                     </div>
                   </button>
@@ -142,7 +157,9 @@ export function ProductSelectionStep({
           Search by product name, brand, or barcode
         </FieldDescription>
         {showError && (
-          <FieldError errors={["Please select a product from the search results"]} />
+          <FieldError
+            errors={["Please select a product from the search results"]}
+          />
         )}
       </Field>
 

@@ -22,10 +22,11 @@ export const allergenRouter = {
 
   byId: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .query(({ ctx, input }) => {
-      return ctx.db.query.Allergen.findFirst({
+    .query(async ({ ctx, input }) => {
+      const result = await ctx.db.query.Allergen.findFirst({
         where: eq(Allergen.id, input.id),
       });
+      return result ?? null;
     }),
 
   create: protectedProcedure

@@ -16,9 +16,11 @@ export const aiSummaryRouter = {
   byProductId: protectedProcedure
     .input(z.object({ productId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      return ctx.db.query.ProductAISummary.findFirst({
+      const result = await ctx.db.query.ProductAISummary.findFirst({
         where: eq(ProductAISummary.productId, input.productId),
       });
+      // TanStack Query v5 requires returning null instead of undefined
+      return result ?? null;
     }),
 
   // Upsert AI summary (used by cron job)
@@ -53,7 +55,7 @@ export const aiSummaryRouter = {
       z.object({
         minReports: z.number().int().positive().default(1),
         limit: z.number().int().positive().default(50),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       // Products with >= minReports that either:
@@ -70,10 +72,7 @@ export const aiSummaryRouter = {
         })
         .from(Product)
         .innerJoin(Report, eq(Report.productId, Product.id))
-        .leftJoin(
-          ProductAISummary,
-          eq(ProductAISummary.productId, Product.id)
-        )
+        .leftJoin(ProductAISummary, eq(ProductAISummary.productId, Product.id))
         .where(isNull(Report.deletedAt))
         .groupBy(Product.id, ProductAISummary.updatedAt)
         .having(sql`count(${Report.id}) >= ${input.minReports}`)
@@ -84,7 +83,7 @@ export const aiSummaryRouter = {
       return products.filter(
         (p) =>
           !p.summaryUpdatedAt ||
-          (p.latestReportDate && p.latestReportDate > p.summaryUpdatedAt)
+          (p.latestReportDate && p.latestReportDate > p.summaryUpdatedAt),
       );
     }),
 } satisfies TRPCRouterRecord;

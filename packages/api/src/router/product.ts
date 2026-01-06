@@ -23,10 +23,11 @@ export const productRouter = {
 
   byId: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .query(({ ctx, input }) => {
-      return ctx.db.query.Product.findFirst({
+    .query(async ({ ctx, input }) => {
+      const result = await ctx.db.query.Product.findFirst({
         where: eq(Product.id, input.id),
       });
+      return result ?? null;
     }),
 
   byBarcode: protectedProcedure

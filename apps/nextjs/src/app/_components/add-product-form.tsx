@@ -22,6 +22,7 @@ import { Button } from "@acme/ui/button";
 import { Input } from "@acme/ui/input";
 
 import { useTRPC } from "~/trpc/react";
+import { BarcodeScannerDialog } from "./barcode-scanner-dialog";
 import { ImageUpload } from "./image-upload";
 import { useBarcodeLookup } from "./use-barcode-lookup";
 
@@ -160,15 +161,19 @@ export function AddProductForm({
               />
               <Button
                 type="button"
-                onClick={handleBarcodeLookup}
+                onClick={() => handleBarcodeLookup()}
                 disabled={isLookingUp || isLoading || !barcodeLookup.trim()}
               >
                 {isLookingUp ? "Looking up..." : "Lookup"}
               </Button>
+              <BarcodeScannerDialog
+                onDetected={(barcode) => handleBarcodeLookup(barcode)}
+                disabled={isLookingUp || isLoading}
+              />
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
-              Search Open Food Facts database to automatically fill product
-              information
+              Scan or enter a barcode to fill product information from Open Food
+              Facts
             </p>
           </div>
 

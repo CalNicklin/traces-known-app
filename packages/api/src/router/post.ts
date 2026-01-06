@@ -16,10 +16,11 @@ export const postRouter = {
 
   byId: protectedProcedure
     .input(z.object({ id: z.string() }))
-    .query(({ ctx, input }) => {
-      return ctx.db.query.Post.findFirst({
+    .query(async ({ ctx, input }) => {
+      const result = await ctx.db.query.Post.findFirst({
         where: eq(Post.id, input.id),
       });
+      return result ?? null;
     }),
 
   create: protectedProcedure

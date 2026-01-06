@@ -39,10 +39,11 @@ export const categoryRouter = {
   /** Get category by slug */
   bySlug: protectedProcedure
     .input(z.object({ slug: z.string() }))
-    .query(({ ctx, input }) => {
-      return ctx.db.query.Category.findFirst({
+    .query(async ({ ctx, input }) => {
+      const result = await ctx.db.query.Category.findFirst({
         where: eq(Category.slug, input.slug),
       });
+      return result ?? null;
     }),
 
   /** Get products by category slug with pagination */
@@ -113,10 +114,11 @@ export const categoryRouter = {
   /** Get category by ID */
   byId: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .query(({ ctx, input }) => {
-      return ctx.db.query.Category.findFirst({
+    .query(async ({ ctx, input }) => {
+      const result = await ctx.db.query.Category.findFirst({
         where: eq(Category.id, input.id),
       });
+      return result ?? null;
     }),
 
   /** Create a new category (admin only in future) */
