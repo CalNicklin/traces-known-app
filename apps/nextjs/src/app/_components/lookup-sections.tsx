@@ -7,7 +7,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Badge } from "@acme/ui";
 
 import { useTRPC } from "~/trpc/react";
-import { CategoryGrid, CategoryGridSkeleton } from "./category-grid";
+import { CategoryChips, CategoryChipsSkeleton } from "./category-chips";
 import { ProductCarousel, ProductCarouselSkeleton } from "./product-carousel";
 
 interface LookupSectionsProps {
@@ -34,7 +34,7 @@ export function LookupSections({ isLoggedIn }: LookupSectionsProps) {
         </Suspense>
       )}
 
-      <Suspense fallback={<CategoryGridSkeleton />}>
+      <Suspense fallback={<CategoryChipsSkeleton title="Browse by Category" />}>
         <CategoriesSection />
       </Suspense>
 
@@ -94,7 +94,7 @@ function CategoriesSection() {
     trpc.category.all.queryOptions(),
   );
 
-  return <CategoryGrid categories={categories} />;
+  return <CategoryChips categories={categories} title="Browse by Category" />;
 }
 
 function RecentlyAddedSection() {
@@ -111,4 +111,3 @@ function RecentlyAddedSection() {
     />
   );
 }
-

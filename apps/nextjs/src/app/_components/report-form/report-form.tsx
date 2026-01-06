@@ -12,6 +12,7 @@ import {
   DetailsStep,
   ProductSelectionStep,
   ReportTypeStep,
+  ThankYouStep,
 } from "./steps";
 import { useReportForm } from "./use-report-form";
 import { WizardHeader } from "./wizard-header";
@@ -56,6 +57,7 @@ export function ReportForm({ productId }: ReportFormProps) {
     currentStep,
     goBack,
     goToStep,
+    goToSuccess,
 
     // Product selection
     productSearch,
@@ -160,7 +162,14 @@ export function ReportForm({ productId }: ReportFormProps) {
                 isSubmitting={isSubmitting}
                 createdReportId={createdReportId}
                 queryClient={queryClient}
-                onReset={resetForm}
+                onComplete={goToSuccess}
+              />
+            )}
+
+            {currentStep === "success" && selectedProduct && (
+              <ThankYouStep
+                productId={selectedProduct.id}
+                reportType={reportType}
               />
             )}
           </form>

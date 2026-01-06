@@ -11,7 +11,6 @@ import {
   Text,
 } from "@acme/ui";
 import { Button } from "@acme/ui/button";
-import { toast } from "@acme/ui/toast";
 
 import { ImageUpload } from "../../image-upload";
 import type { Allergen, ProductSearchResult } from "../types";
@@ -47,7 +46,7 @@ interface DetailsStepProps {
   isSubmitting: boolean;
   createdReportId: string | null;
   queryClient: QueryClient;
-  onReset: () => void;
+  onComplete: () => void;
 }
 
 function ReportSummary({
@@ -111,7 +110,7 @@ export function DetailsStep({
   isSubmitting,
   createdReportId,
   queryClient,
-  onReset,
+  onComplete,
 }: DetailsStepProps) {
   return (
     <>
@@ -171,12 +170,9 @@ export function DetailsStep({
             type="button"
             variant="outline"
             className="mt-4 w-full"
-            onClick={() => {
-              onReset();
-              toast.success("Report complete!");
-            }}
+            onClick={onComplete}
           >
-            Done Adding Images
+            Done
           </Button>
         </div>
       ) : (

@@ -246,6 +246,10 @@ export function useReportForm({ productId }: UseReportFormOptions) {
     setCurrentStep(step);
   };
 
+  const goToSuccess = () => {
+    setCurrentStep("success");
+  };
+
   // Allergen toggle handler
   const toggleAllergen = (allergenId: string) => {
     const current = allergenIds ?? [];
@@ -280,6 +284,7 @@ export function useReportForm({ productId }: UseReportFormOptions) {
     currentStep,
     goBack,
     goToStep,
+    goToSuccess,
 
     // Product selection
     productSearch,

@@ -43,7 +43,7 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
           return (
             <Link
               key={category.id}
-              href={`/lookup?category=${category.slug}`}
+              href={`/category/${category.slug}`}
               className="group block"
               role="listitem"
             >

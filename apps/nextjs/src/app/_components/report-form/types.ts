@@ -23,13 +23,14 @@ export interface Allergen {
   name: string;
 }
 
-export type WizardStep = "product" | "type" | "allergens" | "details";
+export type WizardStep = "product" | "type" | "allergens" | "details" | "success";
 
 export const STEP_NUMBERS: Record<WizardStep, number> = {
   product: 1,
   type: 2,
   allergens: 3,
   details: 4,
+  success: 5,
 };
 
 export const WIZARD_STEPS: readonly WizardStep[] = [
@@ -37,4 +38,5 @@ export const WIZARD_STEPS: readonly WizardStep[] = [
   "type",
   "allergens",
   "details",
+  "success",
 ] as const;

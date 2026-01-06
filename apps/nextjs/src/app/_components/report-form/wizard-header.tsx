@@ -14,7 +14,18 @@ interface WizardHeaderProps {
 
 export function WizardHeader({ currentStep, onBack }: WizardHeaderProps) {
   const currentStepNumber = STEP_NUMBERS[currentStep];
-  const totalSteps = WIZARD_STEPS.length;
+  // Don't count success step in total
+  const totalSteps = WIZARD_STEPS.length - 1;
+  const isSuccessStep = currentStep === "success";
+
+  // Show simplified header for success step
+  if (isSuccessStep) {
+    return (
+      <CardHeader>
+        <CardTitle className="text-center">Report Complete</CardTitle>
+      </CardHeader>
+    );
+  }
 
   return (
     <CardHeader>
@@ -39,7 +50,7 @@ export function WizardHeader({ currentStep, onBack }: WizardHeaderProps) {
       </div>
       {/* Progress bar */}
       <div className="mt-4 flex gap-1">
-        {WIZARD_STEPS.map((step) => (
+        {WIZARD_STEPS.filter((s) => s !== "success").map((step) => (
           <div
             key={step}
             className={cn(
