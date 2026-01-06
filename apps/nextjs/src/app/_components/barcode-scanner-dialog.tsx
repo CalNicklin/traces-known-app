@@ -37,9 +37,13 @@ export function BarcodeScannerDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" disabled={disabled} className="gap-2">
+        <Button
+          variant="outline"
+          disabled={disabled}
+          className="shrink-0 gap-2 whitespace-nowrap"
+        >
           <CameraIcon className="h-4 w-4" />
-          Scan Barcode
+          Scan
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">

@@ -170,22 +170,37 @@ export function BarcodeScanner({ onDetected, onError }: BarcodeScannerProps) {
       <div
         id="barcode-scanner-container"
         ref={containerRef}
-        className="relative aspect-video w-full overflow-hidden rounded-lg bg-black [&_video]:object-cover"
+        className="relative aspect-video w-full rounded-lg bg-black [&>div]:!border-0 [&_video]:h-full [&_video]:w-full [&_video]:object-cover"
       />
 
-      {/* Viewfinder overlay - matches qrbox dimensions (280x160) */}
+      {/* Viewfinder overlay with cutout using clip-path */}
       {state === "scanning" && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          {/* Scanning window with cutout effect */}
-          <div
-            className="relative"
-            style={{
-              width: 280,
-              height: 160,
-              boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.5)",
-            }}
-          >
-            {/* Corner brackets */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg">
+          {/* Dark overlay with transparent center cutout */}
+          <svg className="absolute inset-0 h-full w-full">
+            <defs>
+              <mask id="viewfinder-mask">
+                {/* White = visible, black = hidden */}
+                <rect width="100%" height="100%" fill="white" />
+                <rect
+                  x="50%"
+                  y="50%"
+                  width="280"
+                  height="160"
+                  fill="black"
+                  transform="translate(-140, -80)"
+                />
+              </mask>
+            </defs>
+            <rect
+              width="100%"
+              height="100%"
+              fill="rgba(0, 0, 0, 0.5)"
+              mask="url(#viewfinder-mask)"
+            />
+          </svg>
+          {/* Corner brackets */}
+          <div className="absolute left-1/2 top-1/2 h-40 w-[280px] -translate-x-1/2 -translate-y-1/2">
             <div className="absolute left-0 top-0 h-6 w-6 border-l-2 border-t-2 border-white" />
             <div className="absolute right-0 top-0 h-6 w-6 border-r-2 border-t-2 border-white" />
             <div className="absolute bottom-0 left-0 h-6 w-6 border-b-2 border-l-2 border-white" />
