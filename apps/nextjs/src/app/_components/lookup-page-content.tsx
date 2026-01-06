@@ -57,7 +57,7 @@ export function LookupPageContent({ isLoggedIn }: LookupPageContentProps) {
   return (
     <>
       <Card className="bg-muted/50">
-        <CardContent className="flex items-center justify-between gap-4 p-4">
+        <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <p className="text-sm text-muted-foreground">
             Scan a product barcode to look it up instantly
           </p>

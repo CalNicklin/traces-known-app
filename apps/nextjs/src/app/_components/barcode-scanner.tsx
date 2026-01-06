@@ -15,8 +15,8 @@ type ScannerState = "initializing" | "scanning" | "error" | "permission_denied";
 
 const SCANNER_CONFIG = {
   fps: 10,
-  qrbox: { width: 280, height: 160 },
   aspectRatio: 1.777,
+  // No qrbox - we use our own custom viewfinder overlay
   formatsToSupport: [
     Html5QrcodeSupportedFormats.EAN_13,
     Html5QrcodeSupportedFormats.EAN_8,
@@ -103,12 +103,11 @@ export function BarcodeScanner({ onDetected, onError }: BarcodeScannerProps) {
 
         if (!mounted) return;
 
-        // Start scanning
+        // Start scanning - no qrbox so library doesn't draw its own overlay
         await scannerRef.current.start(
           cameraId,
           {
             fps: SCANNER_CONFIG.fps,
-            qrbox: SCANNER_CONFIG.qrbox,
             aspectRatio: SCANNER_CONFIG.aspectRatio,
           },
           handleScanSuccess,
@@ -171,13 +170,21 @@ export function BarcodeScanner({ onDetected, onError }: BarcodeScannerProps) {
       <div
         id="barcode-scanner-container"
         ref={containerRef}
-        className="relative aspect-video w-full overflow-hidden rounded-lg bg-black"
+        className="relative aspect-video w-full overflow-hidden rounded-lg bg-black [&_video]:object-cover"
       />
 
-      {/* Viewfinder overlay */}
+      {/* Viewfinder overlay - matches qrbox dimensions (280x160) */}
       {state === "scanning" && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="relative h-40 w-72">
+          {/* Scanning window with cutout effect */}
+          <div
+            className="relative"
+            style={{
+              width: 280,
+              height: 160,
+              boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.5)",
+            }}
+          >
             {/* Corner brackets */}
             <div className="absolute left-0 top-0 h-6 w-6 border-l-2 border-t-2 border-white" />
             <div className="absolute right-0 top-0 h-6 w-6 border-r-2 border-t-2 border-white" />
@@ -205,7 +212,7 @@ export function BarcodeScanner({ onDetected, onError }: BarcodeScannerProps) {
           <div className="text-center text-white">
             <p className="mb-4 text-sm">{errorMessage}</p>
             {state === "permission_denied" ? (
-              <p className="text-muted-foreground text-xs">
+              <p className="text-xs text-muted-foreground">
                 Check your browser settings to enable camera access.
               </p>
             ) : (

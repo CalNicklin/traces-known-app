@@ -146,12 +146,13 @@ export function AddProductForm({
             <label className="mb-2 block text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
               Lookup Product by Barcode
             </label>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <Input
                 value={barcodeLookup}
                 onChange={(e) => setBarcodeLookup(e.target.value)}
-                placeholder="Enter barcode (e.g., 3017624010701)"
+                placeholder="Enter barcode"
                 disabled={isLookingUp || isLoading}
+                className="flex-1"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
@@ -159,17 +160,20 @@ export function AddProductForm({
                   }
                 }}
               />
-              <Button
-                type="button"
-                onClick={() => handleBarcodeLookup()}
-                disabled={isLookingUp || isLoading || !barcodeLookup.trim()}
-              >
-                {isLookingUp ? "Looking up..." : "Lookup"}
-              </Button>
-              <BarcodeScannerDialog
-                onDetected={(barcode) => handleBarcodeLookup(barcode)}
-                disabled={isLookingUp || isLoading}
-              />
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  onClick={() => handleBarcodeLookup()}
+                  disabled={isLookingUp || isLoading || !barcodeLookup.trim()}
+                  className="flex-1 sm:flex-none"
+                >
+                  {isLookingUp ? "Looking up..." : "Lookup"}
+                </Button>
+                <BarcodeScannerDialog
+                  onDetected={(barcode) => handleBarcodeLookup(barcode)}
+                  disabled={isLookingUp || isLoading}
+                />
+              </div>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
               Scan or enter a barcode to fill product information from Open Food
