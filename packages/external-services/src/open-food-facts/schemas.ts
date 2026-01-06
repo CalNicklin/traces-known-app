@@ -3,452 +3,111 @@ import { z } from "zod/v4";
 /**
  * Zod schemas for Open Food Facts API responses
  * Based on: https://openfoodfacts.github.io/openfoodfacts-server/api/ref-v2/#get-/api/v2/product/-code-
- * TypeScript interfaces reference: Untitled-1 (Root, Product interfaces)
  *
- * All Product fields are optional since the API only returns fields with available data
+ * Uses a minimal schema that only validates fields we actually use in mappers.
+ * Uses .passthrough() to allow additional fields without validation errors.
  */
+
+/**
+ * Ingredient object schema - only fields we use
+ */
+const IngredientSchema = z
+  .object({
+    id: z.string().optional(),
+    text: z.string().optional(),
+    percent: z.number().optional(),
+    percent_estimate: z.number().optional(),
+    percent_max: z.number().optional(),
+    percent_min: z.number().optional(),
+    vegan: z.string().optional(),
+    vegetarian: z.string().optional(),
+  })
+  .passthrough();
+
+/**
+ * Product schema - minimal validation for fields we actually use
+ * Uses passthrough to allow any additional fields from the API
+ */
+const ProductSchema = z
+  .object({
+    // Product identification
+    _id: z.string().optional(),
+    code: z.string().optional(),
+
+    // Names - we use these
+    product_name: z.string().optional(),
+    product_name_en: z.string().optional(),
+    generic_name: z.string().optional(),
+    generic_name_en: z.string().optional(),
+
+    // Brand
+    brands: z.string().optional(),
+    brands_tags: z.array(z.string()).optional(),
+
+    // Allergens - we use these
+    allergens: z.string().optional(),
+    allergens_from_ingredients: z.string().optional(),
+    allergens_from_user: z.string().optional(),
+    allergens_tags: z.array(z.string()).optional(),
+
+    // Ingredients - we use these
+    ingredients: z.array(IngredientSchema).optional(),
+    ingredients_tags: z.array(z.string()).optional(),
+    ingredients_text: z.string().optional(),
+    ingredients_text_en: z.string().optional(),
+    ingredients_text_with_allergens: z.string().optional(),
+    ingredients_text_with_allergens_en: z.string().optional(),
+
+    // Images - we use these
+    image_url: z.string().optional(),
+    image_front_url: z.string().optional(),
+    image_front_small_url: z.string().optional(),
+    image_small_url: z.string().optional(),
+
+    // Categories
+    categories: z.string().optional(),
+    categories_tags: z.array(z.string()).optional(),
+
+    // Quantity - can be string or number
+    quantity: z.union([z.string(), z.number()]).optional(),
+    product_quantity: z.union([z.string(), z.number()]).optional(),
+    serving_quantity: z.union([z.string(), z.number()]).optional(),
+    serving_size: z.string().optional(),
+
+    // Nutrition grade
+    nutriscore_grade: z.string().optional(),
+    nutrition_grades: z.string().optional(),
+
+    // Status
+    status: z.union([z.string(), z.number()]).optional(),
+  })
+  .passthrough(); // Allow any other fields from the API
 
 /**
  * Schema for the root API response
- * Matches the Root interface structure
  */
 export const OpenFoodFactsRootSchema = z.object({
-  code: z.string(), // Required - always present
-  status: z.number(), // Required - always present (1 = found, 0 = not found)
-  status_verbose: z.string(), // Required - always present
-  product: z
-    .object({
-      // All product fields are optional - API only returns fields with data
-      _id: z.string().optional(),
-      _keywords: z.array(z.string()).optional(),
-      abbreviated_product_name: z.string().optional(),
-      abbreviated_product_name_fr: z.string().optional(),
-      added_countries_tags: z.array(z.unknown()).optional(),
-      additives_n: z.number().optional(),
-      additives_original_tags: z.array(z.string()).optional(),
-      additives_prev_original_tags: z.array(z.string()).optional(),
-      additives_tags: z.array(z.string()).optional(),
-      allergens: z.string().optional(),
-      allergens_from_ingredients: z.string().optional(),
-      allergens_from_user: z.string().optional(),
-      allergens_hierarchy: z.array(z.string()).optional(),
-      allergens_lc: z.string().optional(),
-      allergens_tags: z.array(z.string()).optional(),
-      amino_acids_prev_tags: z.array(z.unknown()).optional(),
-      amino_acids_tags: z.array(z.unknown()).optional(),
-      brands: z.string().optional(),
-      brands_tags: z.array(z.string()).optional(),
-      carbon_footprint_percent_of_known_ingredients: z.number().optional(),
-      categories: z.string().optional(),
-      categories_hierarchy: z.array(z.string()).optional(),
-      categories_lc: z.string().optional(),
-      categories_properties: z.record(z.string(), z.unknown()).optional(),
-      categories_properties_tags: z.array(z.string()).optional(),
-      categories_tags: z.array(z.string()).optional(),
-      category_properties: z.record(z.string(), z.unknown()).optional(),
-      checked: z.string().optional(),
-      checkers_tags: z.array(z.string()).optional(),
-      ciqual_food_name_tags: z.array(z.string()).optional(),
-      cities_tags: z.array(z.unknown()).optional(),
-      code: z.string().optional(),
-      codes_tags: z.array(z.string()).optional(),
-      compared_to_category: z.string().optional(),
-      complete: z.number().optional(),
-      completeness: z.number().optional(),
-      conservation_conditions: z.string().optional(),
-      conservation_conditions_fr: z.string().optional(),
-      correctors_tags: z.array(z.string()).optional(),
-      countries: z.string().optional(),
-      countries_beforescanbot: z.string().optional(),
-      countries_hierarchy: z.array(z.string()).optional(),
-      countries_lc: z.string().optional(),
-      countries_tags: z.array(z.string()).optional(),
-      created_t: z.number().optional(),
-      creator: z.string().optional(),
-      customer_service: z.string().optional(),
-      customer_service_fr: z.string().optional(),
-      data_quality_bugs_tags: z.array(z.unknown()).optional(),
-      data_quality_completeness: z.array(z.string()).optional(),
-      data_quality_dimensions: z.record(z.string(), z.unknown()).optional(),
-      data_quality_errors_tags: z.array(z.unknown()).optional(),
-      data_quality_info_tags: z.array(z.string()).optional(),
-      data_quality_tags: z.array(z.string()).optional(),
-      data_quality_warnings_tags: z.array(z.string()).optional(),
-      data_sources: z.string().optional(),
-      data_sources_tags: z.array(z.string()).optional(),
-      ecoscore_data: z.record(z.string(), z.unknown()).optional(),
-      ecoscore_extended_data: z.record(z.string(), z.unknown()).optional(),
-      ecoscore_extended_data_version: z.string().optional(),
-      ecoscore_grade: z.string().optional(),
-      ecoscore_score: z.number().optional(),
-      ecoscore_tags: z.array(z.string()).optional(),
-      editors_tags: z.array(z.string()).optional(),
-      emb_codes: z.string().optional(),
-      emb_codes_20141016: z.string().optional(),
-      emb_codes_orig: z.string().optional(),
-      emb_codes_tags: z.array(z.unknown()).optional(),
-      entry_dates_tags: z.array(z.string()).optional(),
-      environment_impact_level: z.string().optional(),
-      environment_impact_level_tags: z.array(z.string()).optional(),
-      expiration_date: z.string().optional(),
-      food_groups: z.string().optional(),
-      food_groups_tags: z.array(z.string()).optional(),
-      "fruits-vegetables-nuts_100g_estimate": z.number().optional(),
-      generic_name: z.string().optional(),
-      generic_name_ar: z.string().optional(),
-      generic_name_de: z.string().optional(),
-      generic_name_en: z.string().optional(),
-      generic_name_es: z.string().optional(),
-      generic_name_fr: z.string().optional(),
-      generic_name_id: z.string().optional(),
-      generic_name_it: z.string().optional(),
-      generic_name_nl: z.string().optional(),
-      grades: z.record(z.string(), z.unknown()).optional(),
-      id: z.string().optional(),
-      image_front_small_url: z.string().optional(),
-      image_front_thumb_url: z.string().optional(),
-      image_front_url: z.string().optional(),
-      image_nutrition_small_url: z.string().optional(),
-      image_nutrition_thumb_url: z.string().optional(),
-      image_nutrition_url: z.string().optional(),
-      image_small_url: z.string().optional(),
-      image_thumb_url: z.string().optional(),
-      image_url: z.string().optional(),
-      images: z.record(z.string(), z.unknown()).optional(),
-      informers_tags: z.array(z.string()).optional(),
-      ingredients: z
-        .array(
-          z.object({
-            id: z.string().optional(),
-            percent_estimate: z.number().optional(),
-            percent_max: z.number().optional(),
-            percent_min: z.number().optional(),
-            text: z.string().optional(),
-            vegan: z.string().optional(),
-            vegetarian: z.string().optional(),
-            from_palm_oil: z.string().optional(),
-            percent: z.number().optional(),
-            ingredients: z.array(z.unknown()).optional(),
-          }),
-        )
-        .optional(),
-      ingredients_analysis: z
-        .record(z.string(), z.array(z.string()))
-        .optional(),
-      ingredients_analysis_tags: z.array(z.string()).optional(),
-      ingredients_from_or_that_may_be_from_palm_oil_n: z.number().optional(),
-      ingredients_from_palm_oil_n: z.number().optional(),
-      ingredients_from_palm_oil_tags: z.array(z.unknown()).optional(),
-      ingredients_hierarchy: z.array(z.string()).optional(),
-      ingredients_n: z.number().optional(),
-      ingredients_n_tags: z.array(z.string()).optional(),
-      ingredients_original_tags: z.array(z.string()).optional(),
-      ingredients_percent_analysis: z.number().optional(),
-      ingredients_tags: z.array(z.string()).optional(),
-      ingredients_text: z.string().optional(),
-      ingredients_text_en: z.string().optional(),
-      ingredients_text_fr: z.string().optional(),
-      ingredients_text_with_allergens: z.string().optional(),
-      ingredients_text_with_allergens_en: z.string().optional(),
-      ingredients_text_with_allergens_fr: z.string().optional(),
-      ingredients_that_may_be_from_palm_oil_n: z.number().optional(),
-      ingredients_that_may_be_from_palm_oil_tags: z
-        .array(z.string())
-        .optional(),
-      ingredients_with_specified_percent_n: z.number().optional(),
-      ingredients_with_specified_percent_sum: z.number().optional(),
-      ingredients_with_unspecified_percent_n: z.number().optional(),
-      ingredients_with_unspecified_percent_sum: z.number().optional(),
-      interface_version_created: z.string().optional(),
-      interface_version_modified: z.string().optional(),
-      known_ingredients_n: z.number().optional(),
-      labels: z.string().optional(),
-      labels_hierarchy: z.array(z.string()).optional(),
-      labels_lc: z.string().optional(),
-      labels_tags: z.array(z.string()).optional(),
-      lang: z.string().optional(),
-      languages: z.record(z.string(), z.number()).optional(),
-      languages_codes: z.record(z.string(), z.number()).optional(),
-      languages_hierarchy: z.array(z.string()).optional(),
-      languages_tags: z.array(z.string()).optional(),
-      last_check_dates_tags: z.array(z.string()).optional(),
-      last_checked_t: z.number().optional(),
-      last_checker: z.string().optional(),
-      last_edit_dates_tags: z.array(z.string()).optional(),
-      last_editor: z.string().optional(),
-      last_image_dates_tags: z.array(z.string()).optional(),
-      last_image_t: z.number().optional(),
-      last_modified_by: z.string().optional(),
-      last_modified_t: z.number().optional(),
-      lc: z.string().optional(),
-      link: z.string().optional(),
-      main_countries_tags: z.array(z.unknown()).optional(),
-      manufacturing_places: z.string().optional(),
-      manufacturing_places_tags: z.array(z.unknown()).optional(),
-      max_imgid: z.string().optional(),
-      minerals_prev_tags: z.array(z.unknown()).optional(),
-      minerals_tags: z.array(z.unknown()).optional(),
-      misc_tags: z.array(z.string()).optional(),
-      no_nutrition_data: z.string().optional(),
-      nova_group: z.number().optional(),
-      nova_groups: z.string().optional(),
-      nova_groups_markers: z
-        .record(z.string(), z.array(z.array(z.string())))
-        .optional(),
-      nova_groups_tags: z.array(z.string()).optional(),
-      nucleotides_prev_tags: z.array(z.unknown()).optional(),
-      nucleotides_tags: z.array(z.unknown()).optional(),
-      nutrient_levels: z
-        .object({
-          fat: z.string().optional(),
-          salt: z.string().optional(),
-          "saturated-fat": z.string().optional(),
-          sugars: z.string().optional(),
-        })
-        .optional(),
-      nutrient_levels_tags: z.array(z.string()).optional(),
-      nutriments: z
-        .object({
-          alcohol: z.number().optional(),
-          alcohol_100g: z.number().optional(),
-          alcohol_serving: z.number().optional(),
-          alcohol_unit: z.string().optional(),
-          alcohol_value: z.number().optional(),
-          carbohydrates: z.number().optional(),
-          carbohydrates_100g: z.number().optional(),
-          carbohydrates_serving: z.number().optional(),
-          carbohydrates_unit: z.string().optional(),
-          carbohydrates_value: z.number().optional(),
-          "carbon-footprint-from-known-ingredients_product": z
-            .number()
-            .optional(),
-          "carbon-footprint-from-known-ingredients_serving": z
-            .number()
-            .optional(),
-          energy: z.number().optional(),
-          "energy-kcal": z.number().optional(),
-          "energy-kcal_100g": z.number().optional(),
-          "energy-kcal_serving": z.number().optional(),
-          "energy-kcal_unit": z.string().optional(),
-          "energy-kcal_value": z.number().optional(),
-          "energy-kj": z.number().optional(),
-          "energy-kj_100g": z.number().optional(),
-          "energy-kj_serving": z.number().optional(),
-          "energy-kj_unit": z.string().optional(),
-          "energy-kj_value": z.number().optional(),
-          energy_100g: z.number().optional(),
-          energy_serving: z.number().optional(),
-          energy_unit: z.string().optional(),
-          energy_value: z.number().optional(),
-          fat: z.number().optional(),
-          fat_100g: z.number().optional(),
-          fat_serving: z.number().optional(),
-          fat_unit: z.string().optional(),
-          fat_value: z.number().optional(),
-          "fruits-vegetables-nuts-estimate-from-ingredients_100g": z
-            .number()
-            .optional(),
-          "fruits-vegetables-nuts-estimate-from-ingredients_serving": z
-            .number()
-            .optional(),
-          "nova-group": z.number().optional(),
-          "nova-group_100g": z.number().optional(),
-          "nova-group_serving": z.number().optional(),
-          "nutrition-score-fr": z.number().optional(),
-          "nutrition-score-fr_100g": z.number().optional(),
-          proteins: z.number().optional(),
-          proteins_100g: z.number().optional(),
-          proteins_serving: z.number().optional(),
-          proteins_unit: z.string().optional(),
-          proteins_value: z.number().optional(),
-          salt: z.number().optional(),
-          salt_100g: z.number().optional(),
-          salt_serving: z.number().optional(),
-          salt_unit: z.string().optional(),
-          salt_value: z.number().optional(),
-          "saturated-fat": z.number().optional(),
-          "saturated-fat_100g": z.number().optional(),
-          "saturated-fat_serving": z.number().optional(),
-          "saturated-fat_unit": z.string().optional(),
-          "saturated-fat_value": z.number().optional(),
-          sodium: z.number().optional(),
-          sodium_100g: z.number().optional(),
-          sodium_serving: z.number().optional(),
-          sodium_unit: z.string().optional(),
-          sodium_value: z.number().optional(),
-          sugars: z.number().optional(),
-          sugars_100g: z.number().optional(),
-          sugars_serving: z.number().optional(),
-          sugars_unit: z.string().optional(),
-          sugars_value: z.number().optional(),
-        })
-        .optional(),
-      nutriscore_data: z
-        .object({
-          energy: z.number().optional(),
-          energy_points: z.number().optional(),
-          energy_value: z.number().optional(),
-          fiber: z.number().optional(),
-          fiber_points: z.number().optional(),
-          fiber_value: z.number().optional(),
-          fruits_vegetables_nuts_colza_walnut_olive_oils: z.number().optional(),
-          fruits_vegetables_nuts_colza_walnut_olive_oils_points: z
-            .number()
-            .optional(),
-          fruits_vegetables_nuts_colza_walnut_olive_oils_value: z
-            .number()
-            .optional(),
-          grade: z.string().optional(),
-          is_beverage: z.number().optional(),
-          is_cheese: z.number().optional(),
-          is_fat: z.number().optional(),
-          is_water: z.number().optional(),
-          negative_points: z.number().optional(),
-          positive_points: z.number().optional(),
-          proteins: z.number().optional(),
-          proteins_points: z.number().optional(),
-          proteins_value: z.number().optional(),
-          saturated_fat: z.number().optional(),
-          saturated_fat_points: z.number().optional(),
-          saturated_fat_ratio: z.number().optional(),
-          saturated_fat_ratio_points: z.number().optional(),
-          saturated_fat_ratio_value: z.number().optional(),
-          saturated_fat_value: z.number().optional(),
-          score: z.number().optional(),
-          sodium: z.number().optional(),
-          sodium_points: z.number().optional(),
-          sodium_value: z.number().optional(),
-          sugars: z.number().optional(),
-          sugars_points: z.number().optional(),
-          sugars_value: z.number().optional(),
-        })
-        .optional(),
-      nutriscore_grade: z.string().optional(),
-      nutriscore_score: z.number().optional(),
-      nutriscore_score_opposite: z.number().optional(),
-      nutrition_data: z.string().optional(),
-      nutrition_data_per: z.string().optional(),
-      nutrition_data_prepared: z.string().optional(),
-      nutrition_data_prepared_per: z.string().optional(),
-      nutrition_grade_fr: z.string().optional(),
-      nutrition_grades: z.string().optional(),
-      nutrition_grades_tags: z.array(z.string()).optional(),
-      nutrition_score_beverage: z.number().optional(),
-      nutrition_score_warning_fruits_vegetables_nuts_estimate_from_ingredients:
-        z.number().optional(),
-      nutrition_score_warning_fruits_vegetables_nuts_estimate_from_ingredients_value:
-        z.number().optional(),
-      nutrition_score_warning_no_fiber: z.number().optional(),
-      obsolete: z.string().optional(),
-      obsolete_since_date: z.string().optional(),
-      origin: z.string().optional(),
-      origins: z.string().optional(),
-      origins_hierarchy: z.array(z.unknown()).optional(),
-      origins_lc: z.string().optional(),
-      origins_tags: z.array(z.string()).optional(),
-      other_nutritional_substances_tags: z.array(z.unknown()).optional(),
-      owner: z.string().optional(),
-      owners_tags: z.string().optional(),
-      packaging: z.string().optional(),
-      packaging_hierarchy: z.array(z.string()).optional(),
-      packaging_lc: z.string().optional(),
-      packaging_tags: z.array(z.string()).optional(),
-      packaging_text: z.string().optional(),
-      packaging_text_ar: z.string().optional(),
-      packaging_text_de: z.string().optional(),
-      packaging_text_en: z.string().optional(),
-      packaging_text_es: z.string().optional(),
-      packaging_text_fr: z.string().optional(),
-      packaging_text_id: z.string().optional(),
-      packaging_text_it: z.string().optional(),
-      packaging_text_nl: z.string().optional(),
-      packagings: z
-        .array(
-          z.object({
-            material: z.string().optional(),
-          }),
-        )
-        .optional(),
-      photographers_tags: z.array(z.string()).optional(),
-      pnns_groups_1: z.string().optional(),
-      pnns_groups_1_tags: z.array(z.string()).optional(),
-      pnns_groups_2: z.string().optional(),
-      pnns_groups_2_tags: z.array(z.string()).optional(),
-      popularity_key: z.number().optional(),
-      popularity_tags: z.array(z.string()).optional(),
-      product_name: z.string().optional(),
-      product_name_ar: z.string().optional(),
-      product_name_de: z.string().optional(),
-      product_name_en: z.string().optional(),
-      product_name_es: z.string().optional(),
-      product_name_fr: z.string().optional(),
-      product_name_id: z.string().optional(),
-      product_name_it: z.string().optional(),
-      product_name_nl: z.string().optional(),
-      product_quantity: z.string().optional(),
-      purchase_places: z.string().optional(),
-      purchase_places_tags: z.array(z.string()).optional(),
-      quantity: z.string().optional(),
-      removed_countries_tags: z.array(z.unknown()).optional(),
-      rev: z.number().optional(),
-      scans_n: z.number().optional(),
-      scores: z.record(z.string(), z.unknown()).optional(),
-      selected_images: z.record(z.string(), z.unknown()).optional(),
-      serving_quantity: z.union([z.string(), z.number()]).optional(),
-      serving_size: z.string().optional(),
-      sortkey: z.number().optional(),
-      sources: z
-        .array(
-          z.object({
-            fields: z.array(z.string()).optional(),
-            id: z.string().optional(),
-            images: z.array(z.unknown()).optional(),
-            import_t: z.number().optional(),
-            manufacturer: z.string().optional(),
-            name: z.string().optional(),
-            source_licence: z.string().optional(),
-            source_licence_url: z.string().optional(),
-            url: z.string().optional(),
-          }),
-        )
-        .optional(),
-      sources_fields: z.record(z.string(), z.unknown()).optional(),
-      states: z.string().optional(),
-      states_hierarchy: z.array(z.string()).optional(),
-      states_tags: z.array(z.string()).optional(),
-      stores: z.string().optional(),
-      stores_tags: z.array(z.string()).optional(),
-      teams: z.string().optional(),
-      teams_tags: z.array(z.string()).optional(),
-      traces: z.string().optional(),
-      traces_from_ingredients: z.string().optional(),
-      traces_from_user: z.string().optional(),
-      traces_hierarchy: z.array(z.unknown()).optional(),
-      traces_lc: z.string().optional(),
-      traces_tags: z.array(z.string()).optional(),
-      unique_scans_n: z.number().optional(),
-      unknown_ingredients_n: z.number().optional(),
-      unknown_nutrients_tags: z.array(z.unknown()).optional(),
-      update_key: z.string().optional(),
-      vitamins_prev_tags: z.array(z.unknown()).optional(),
-      vitamins_tags: z.array(z.unknown()).optional(),
-    })
-    .optional(), // Product is optional (null if not found)
+  code: z.string(),
+  status: z.number(),
+  status_verbose: z.string(),
+  product: ProductSchema.optional(),
 });
 
 /**
- * Schema for search response
+ * Schema for search response - minimal validation
  */
 export const OpenFoodFactsSearchResponseSchema = z.object({
   products: z.array(
-    z.object({
-      code: z.string(),
-      product_name: z.string().optional(),
-      brands: z.string().optional(),
-      image_url: z.string().optional(),
-      image_small_url: z.string().optional(),
-      nutriscore_grade: z.string().optional(),
-    }),
+    z
+      .object({
+        code: z.string(),
+        product_name: z.string().optional(),
+        brands: z.string().optional(),
+        image_url: z.string().optional(),
+        image_small_url: z.string().optional(),
+        nutriscore_grade: z.string().optional(),
+      })
+      .passthrough(),
   ),
   page: z.number().optional(),
   page_size: z.number().optional(),

@@ -149,11 +149,19 @@ export function useBarcodeLookup(options: UseBarcodeLookupOptions = {}) {
     existingProduct,
   ]);
 
-  const handleBarcodeLookup = () => {
-    const barcode = barcodeLookup.trim();
+  /**
+   * Trigger barcode lookup.
+   * @param barcodeOverride - Optional barcode to use instead of state (useful for scanner)
+   */
+  const handleBarcodeLookup = (barcodeOverride?: string) => {
+    const barcode = (barcodeOverride ?? barcodeLookup).trim();
     if (!barcode) {
       toast.error("Please enter a barcode");
       return;
+    }
+    // If override provided, update state so queries use correct barcode
+    if (barcodeOverride) {
+      setBarcodeLookup(barcode);
     }
     setIsLookingUp(true);
   };

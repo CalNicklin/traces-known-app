@@ -1,9 +1,8 @@
 import { Suspense } from "react";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 
-import { Card, CardContent } from "@acme/ui";
-
 import { getSession } from "~/auth/server";
+import { LookupPageContent } from "../_components/lookup-page-content";
 import Search from "../_components/search";
 import { SearchResults } from "../_components/search-results";
 
@@ -34,14 +33,7 @@ export default async function LookupPage(props: {
         <div className="grid grid-cols-1 gap-4 md:gap-8">
           <div className="space-y-4">
             <Search placeholder="Search products..." />
-
-            <Card className="bg-muted/50">
-              <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground">
-                  💡 <strong>Coming soon:</strong> Barcode scanner functionality
-                </p>
-              </CardContent>
-            </Card>
+            <LookupPageContent isLoggedIn={!!session} />
           </div>
 
           <Suspense
